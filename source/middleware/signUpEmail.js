@@ -1,7 +1,7 @@
 module.exports = function (app){
 
-		const validator = require('validator');
-		const responder = require('./responser')
+	const validator = require('validator');
+	const responder = require('./responser')
 
     const signUpEmail = async (req, res, next) => {
 
@@ -16,7 +16,7 @@ module.exports = function (app){
 				let user = await app.service('users').find({query : { 'email.address' : email }});
 
 				if (user.total == 1){
-					
+
 					if (!user.data[0].email.isConfirmed){
 						return responder.sendErrorResponse(res, "EmailAddressNotConfirmed");
 					}

@@ -5,15 +5,19 @@ module.exports =  {
 				let statusCode = 503;
         var resBody = { reason: "ServiceUnavailable"};
 
-				console.log(error)
         switch (type){
 
 					case "CatchError": resBody = { reason: type, innerException: error}; break;
 
+          // Email error messages
 					case "InvalidEmailAddress": resBody = { innerCode: 19, reason: type}; statusCode = 406; break;
 					case "DuplicatedEmailAddress": resBody = { innerCode: 20, reason: type};  statusCode = 406; break;
 					case "EmailAddressNotConfirmed": resBody = { innerCode: 21, reason: type}; statusCode = 406; break;
+          //--------------------------------------------------------------------------------------------------
 
+          // Authentication error messages
+          case "NoAuthHeader" : resBody = { innerCode: 22, reason: type}; statusCode = 417; break;
+          case "NotAuthorized": resBody = { innerCode: 23, reason: type}; statusCode = 401; break;
         }
 
         return response.status(statusCode).send({status: false, error: resBody})
