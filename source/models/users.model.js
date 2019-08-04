@@ -16,6 +16,8 @@ module.exports = function (app) {
 
 		username :	{	type:String, index:{	unique: true, spare: true }},
 
+		password: 	{	type:String },
+
 		apiKey: { type:String, index:{	unique: true, spare: true }},
 
 		profile: {type: Schema.Types.ObjectId, ref: "profiles"},

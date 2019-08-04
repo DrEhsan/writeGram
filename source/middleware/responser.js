@@ -18,6 +18,19 @@ module.exports =  {
           // Authentication error messages
           case "NoAuthHeader" : resBody = { innerCode: 22, reason: type}; statusCode = 417; break;
           case "NotAuthorized": resBody = { innerCode: 23, reason: type}; statusCode = 401; break;
+          //--------------------------------------------------------------------------------------------------
+
+          // Avatar & files
+          case "AvatarNotUploaded" : resBody = { innerCode: 25, reason: type}; statusCode = 415; break;
+
+
+          // Length
+          case "BadUserName" : resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
+          case "Badpassword" :  resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
+
+          // Username
+          case "DuplicatedUserName" :  resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
+          
         }
 
         return response.status(statusCode).send({status: false, error: resBody})
