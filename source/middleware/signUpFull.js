@@ -130,7 +130,7 @@ module.exports = function (app){
     return responder.SendResponse(res,
     {
       user_id : resPatch._id,
-      avatar : profile
+      profile : profile
     });
   }
 

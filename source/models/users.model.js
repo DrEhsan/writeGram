@@ -36,11 +36,11 @@ module.exports = function (app) {
     {
       this.apiKey = crypto.createHmac('sha256', this.email + "writeGram")
                                .update(new Date().toString()+"_" +this.email)
-                                                         .digest('hex');
+                               .digest('hex');
 
-            this.email.token = crypto.createHmac('sha256', this.email + "writeGramEmailToken")
-                                                        .update(new Date().toString()+"_" +this.email)
-                                                        .digest('hex');
+      this.email.token = crypto.createHmac('sha256', this.email + "writeGramEmailToken")
+                                .update(new Date().toString()+"_" +this.email)
+                                .digest('hex');
     }
 
     next();

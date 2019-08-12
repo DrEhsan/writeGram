@@ -24,7 +24,6 @@ module.exports =  {
           case "AvatarNotUploaded" : resBody = { innerCode: 25, reason: type}; statusCode = 415; break;
           case "signUpDoneBefore" : resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
 
-
           // Length
           case "BadUserName" : resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
           case "Badpassword" :  resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
