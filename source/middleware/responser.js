@@ -22,6 +22,7 @@ module.exports =  {
 
           // Avatar & files
           case "AvatarNotUploaded" : resBody = { innerCode: 25, reason: type}; statusCode = 415; break;
+          case "signUpDoneBefore" : resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
 
 
           // Length
@@ -30,7 +31,7 @@ module.exports =  {
 
           // Username
           case "DuplicatedUserName" :  resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
-          
+
         }
 
         return response.status(statusCode).send({status: false, error: resBody})

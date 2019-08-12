@@ -3,19 +3,22 @@ module.exports = function (app){
 	const validator = require('validator');
   const responder = require('./responser')
   const multer = require('multer');
+  const crypto = require('crypto');
+  const ensureApiKey = require('./ensureApiKey');
+  const sharp = require('sharp');
 
   const storage = multer.diskStorage({
-    destination: './public/uploads',
+    destination: './public/uploads/avatars/original',
     filename: function (req, file, cb) {
-        // null as first argument means no error
-        cb(null, Date.now() + '-' + file.originalname )
+
+      cb(null, Date.now() + '-' + file.originalname )
     }
   })
 
   const uploadAvatar = multer({
     storage: storage,
     limits: {
-        fileSize: 1000000
+        fileSize: 10000000
     },
     fileFilter: function (req, file, cb) {
         sanitizeFile(file, cb);
@@ -38,49 +41,98 @@ module.exports = function (app){
     }
   }
 
+  const buildAvatars = async (filePath, fileName) => {
+    let uploadFolder = "./public/uploads/avatars/";
+    await sharp(filePath)
+                         .resize(200)
+                         .rotate()
+                         .toFile(uploadFolder + 'thumb_200/thumb_200_' + fileName);
 
-	const signUpFull = async (req, res, next) =>{
+    await sharp(filePath)
+                         .resize(400)
+                         .rotate()
+                         .toFile(uploadFolder + 'thumb_400/thumb_400_' + fileName);
+  }
 
-		try{
+  const signUpFull = async (req, res, next) => {
 
-      let {username, password} = req.body;
+    let promise = new Promise((resolve) =>{
+      uploadAvatar (req, res, err => {
 
-      if (!validator.isLength(username, {min: 2, max: 16})){
-        return responder.sendErrorResponse(res, 'BadUserName');
+        if (err){
+          resolve('AvatarNotUploaded')
+        }
+        else if (req.file == undefined){
+          resolve('NoAvatarAttach')
+        }
+        else{
+          resolve('ok')
+        }
+      })
+    })
+
+    const result =  (await Promise.all([promise]))[0];
+
+    let {username, password} = req.body;
+
+    if (!validator.isLength(username, {min: 2, max: 16})){
+      return responder.sendErrorResponse(res, 'BadUserName');
+    }
+
+    if (!validator.isLength(password, {min: 2, max: 16})){
+      return responder.sendErrorResponse(res, 'Badpassword');
+    }
+
+    var users = await app.service('users').find({ query : { username: username }});
+
+    if (users.total > 1){
+      return responder.sendErrorResponse(res, 'DuplicatedUserName');
+    }
+
+    if (req.feathers.user.profile != null){
+      return responder.sendErrorResponse(res, 'signUpDoneBefore');
+    }
+
+    var patchData = {
+      username: username,
+      password: crypto.createHmac('sha256', username + "writeGram2019")
+                      .update(username + "_" + password)
+                      .digest('hex')
+    }
+
+    if (result == "AvatarNotUploaded"){
+      return responder.sendErrorResponse(res, 'AvatarNotUploaded');
+    }
+
+    var profile = {};
+
+    if (result == 'ok'){
+      let uploadFolder = "./public/uploads/avatars/";
+      let filePath = uploadFolder + 'original/'+ req.file.filename;
+      let { img_avatar_thumb_200, img_avatar_thumb_400 } = buildAvatars(filePath, req.file.filename);
+
+      console.log(img_avatar_thumb_200)
+
+      profile = {
+        avatar : {
+          img_avatar_orginal : req.file.filename,
+          img_avatar_thumb_200: 'thumb_200_' + req.file.filename,
+          img_avatar_thumb_400: 'thumb_400_' + req.file.filename
+        }
       }
 
-      if (!validator.isLength(password, {min: 2, max: 16})){
-        return responder.sendErrorResponse(res, 'Badpassword');
-      }
+      let profileUser = await app.service('profile').create(profile);
+      patchData.profile = profileUser._id;
+    }
 
-      var result = await app.service('users').find({ query : { username: username }});
+    var resPatch = await app.service('users').patch(req.feathers.user._id, patchData);
 
-      if (result.total > 1){
-        return responder.sendErrorResponse(res, 'DuplicatedUserName');
-      }
+    return responder.SendResponse(res,
+    {
+      user_id : resPatch._id,
+      avatar : profile
+    });
+  }
 
-      var patchData = {
-        username: username,
-        password: crypto.createHmac('sha256', username + "writeGram2019")
-                        .update(username + "_" + password)
-                        .digest('hex')
-      }
-
-      if (req.file != undefined) {
-        uploadAvatar(req, res, (err) => {
-          if (err){
-              return responder.sendErrorResponse(res, 'AvatarNotUploaded');
-          }
-          else{
-
-              // To-Do : need to create profile
-
-          }
-        })
-      }
-		}
-		catch(error){
-
-		}
-	}
+  app.post("/auth/signUpFull", ensureApiKey, signUpFull);
 }
