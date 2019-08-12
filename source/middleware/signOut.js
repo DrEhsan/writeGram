@@ -4,7 +4,7 @@ module.exports = function (app){
     const responder = require('./responser');
     const crypto = require('crypto')
 
-    const logOut = async (req, res, next) => {
+    const signOut = async (req, res, next) => {
 
         let user = req.feathers.user;
 
@@ -14,8 +14,8 @@ module.exports = function (app){
 
         await app.service('users').patch(user._id, { apiKey: newApiKey });
 
-        return responder.SendResponse(res, {logedOut : true});
+        return responder.SendResponse(res, { signedOut : true });
     }
 
-    app.post("/auth/logOut", ensureApiKey, logOut);
+    app.post("/auth/signOut", ensureApiKey, signOut);
 }
