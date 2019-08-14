@@ -5,6 +5,8 @@ const helmet = require('helmet');
 const cors = require('cors');
 const logger = require('./logger');
 
+const expressip = require('express-ip');
+
 const feathers = require('@feathersjs/feathers');
 const configuration = require('@feathersjs/configuration');
 const express = require('@feathersjs/express');
@@ -20,6 +22,7 @@ const mongoose = require('./mongoose');
 
 const app = express(feathers());
 
+app.use(expressip().getIpInfoMiddleware);
 // Load app configuration
 app.configure(configuration());
 // Enable security, CORS, compression, favicon and body parsing
@@ -48,6 +51,8 @@ app.configure(channels);
 // Configure a middleware for 404s and the error handler
 app.use(express.notFound());
 app.use(express.errorHandler({ logger }));
+
+
 
 app.hooks(appHooks);
 

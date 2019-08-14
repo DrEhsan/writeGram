@@ -30,6 +30,15 @@ module.exports =  {
 
           // Username
           case "DuplicatedUserName" :  resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
+          case "UserOrEmailNotFound" :  resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
+
+          case "NoAgentTokenFound" : resBody = { innerCode: 25, reason: type}; statusCode = 417; break;
+          case "NoAgentPushTokenFound" : resBody = { innerCode: 25, reason: type}; statusCode = 417; break;
+
+          case "signUpDoneBefore" : resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
+          case "signUpNotCompleted" : resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
+
+          case "PasswordIsIncorrect" : resBody = { innerCode: 25, reason: type}; statusCode = 401; break;
 
         }
 

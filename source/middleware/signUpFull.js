@@ -93,10 +93,12 @@ module.exports = function (app){
       return responder.sendErrorResponse(res, 'signUpDoneBefore');
     }
 
+    let email = req.feathers.user.email.address;
+
     var patchData = {
       username: username,
-      password: crypto.createHmac('sha256', username + "writeGram2019")
-                      .update(username + "_" + password)
+      password: crypto.createHmac('sha256', username + email + "writeGram2019")
+                      .update(username + "_" + password + "_" + email)
                       .digest('hex')
     }
 

@@ -20,7 +20,9 @@ module.exports = function (app) {
 
         apiKey: { type:String, index:{	unique: true, spare: true }},
 
-        profile: {type: Schema.Types.ObjectId, ref: "profiles"},
+        profile: {type: Schema.Types.ObjectId, ref: "profile"},
+
+        devices: {type: Schema.Types.ObjectId, ref: "devices"},
 
         social : {type: Schema.Types.ObjectId, ref: "socials"}
 

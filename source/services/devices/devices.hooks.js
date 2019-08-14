@@ -1,17 +1,8 @@
 
-const populater = cntx => {
-  if (!cntx.populate){
-    return cntx;
-  }
-
-  let app = cntx.app;
-
-  cntx.params.query["$populate"] = "profile";
-}
 
 module.exports = {
   before: {
-    all: [populater],
+    all: [],
     find: [],
     get: [],
     create: [],
