@@ -1,17 +1,31 @@
+const { iff, isProvider } = require('feathers-hooks-common')
 
-const populater = cntx => {
-  if (!cntx.populate){
+const Before_InternalPopulater = cntx => {
+  if (cntx.params.populate == undefined){
     return cntx;
   }
 
-  let app = cntx.app;
+  cntx.params.query = {};
+  cntx.params.query["$populate"] = ["profile"];
+  return cntx;
+}
 
-  cntx.params.query["$populate"] = "profile";
+const After_InternalPopulater = cntx => {
+  if (cntx.params.populate == undefined || cntx.method != 'patch'){
+    return cntx;
+  }
+
+  let result = cntx.result;
+  result.profile.profileId = result.profile._id;
+  delete result.profile.__v;
+  delete result.profile._id;
+
+  return cntx;
 }
 
 module.exports = {
   before: {
-    all: [populater],
+    all: [Before_InternalPopulater],
     find: [],
     get: [],
     create: [],
@@ -21,7 +35,7 @@ module.exports = {
   },
 
   after: {
-    all: [],
+    all: [After_InternalPopulater],
     find: [],
     get: [],
     create: [],

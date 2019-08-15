@@ -1,7 +1,7 @@
 module.exports = function(app){
 
-	const ensureApiKey = require('./ensureApiKey')
 	const validator = require('validator')
+	const crypto = require('crypto')
 	const responder = require('./responser')
 
 	const signInByEmail = async (req, res, next) =>{
@@ -13,21 +13,23 @@ module.exports = function(app){
 				return responder.sendErrorResponse(res, "InvalidEmailAddress");
 			}
 
-			let _email = app.service('users').find({ query : { 'email.address' : email }});
+			let users = await app.service('users').find({ query : { 'email.address' : email }});
 
-			if (_email.total < 1){
+			if (users.total < 1){
 				return responder.sendErrorResponse(res, 'UserOrEmailNotFound');
 			}
 
-			if (_email.profile == undefined){
+			let user = users.data[0];
+
+			if (user.profile == undefined){
 				return responder.sendErrorResponse(res, 'signUpNotCompleted');
 			}
 
-			let hash = crypto.createHmac('sha256', _email.username + email + "writeGram2019")
-											.update(_email.username + "_" + password + "_" + email)
+			let hash = crypto.createHmac('sha256', user.username + email + "writeGram2019")
+											.update(user.username + "_" + password + "_" + email)
 											.digest('hex')
 
-			if (hash != _email.password){
+			if (hash != user.password){
 				return responder.sendErrorResponse(res, 'PasswordIsIncorrect');
 			}
 
@@ -35,23 +37,25 @@ module.exports = function(app){
 														.update(new Date().toString()+"_" + email)
 														.digest('hex');
 
-			req.feathers.populate = true;
-
-			await app.service('users').patch(_email._id, { apiKey: newApiKey });
+			var patchedUser = await app.service('users').patch(user._id, { apiKey: newApiKey }, {populate: 'profile'});
 
 			{
 				// get wall
 				//
 			}
 
-			var res = {
-				user_id : _email._id,
-				profile : _email.profile // get profile data
+			var resBody = {
+				userId : patchedUser._id,
+				apiKey: newApiKey,
+				profile : patchedUser.profile // get profile data
 			}
+
+			return responder.SendResponse(res, resBody)
 
 		}
 		catch(err){
-
+			console.log(err)
+			return responder.sendErrorResponse(res, 'CatchError', err)
 		}
 	}
 

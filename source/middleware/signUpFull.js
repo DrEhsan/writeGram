@@ -113,8 +113,6 @@ module.exports = function (app){
       let filePath = uploadFolder + 'original/'+ req.file.filename;
       let { img_avatar_thumb_200, img_avatar_thumb_400 } = buildAvatars(filePath, req.file.filename);
 
-      console.log(img_avatar_thumb_200)
-
       profile = {
         avatar : {
           img_avatar_orginal : req.file.filename,

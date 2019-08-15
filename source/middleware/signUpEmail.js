@@ -8,6 +8,7 @@ module.exports = function (app){
 
 			try{
 
+				/*
 				console.log(req.ipInfo)
 
 				if (req.headers.agent_token == undefined){
@@ -18,7 +19,7 @@ module.exports = function (app){
 					return responder.sendErrorResponse(res, "NoAgentPushTokenFound");
 				}
 
-				let { agent_token , agent_push_token } = req.headers;
+				let { agent_token , agent_push_token } = req.headers;*/
 
 				let { email } = req.body;
 
