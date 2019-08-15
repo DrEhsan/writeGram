@@ -4,6 +4,7 @@ const signUpEmail = require('./signUpEmail')
 const signUpFull = require('./signUpFull')
 const signOut = require('./signOut')
 const signInByEmail = require('./signInByEmail')
+const signInByUserName = require('./signInByUserName')
 
 module.exports = function (app) {
   // Add your custom middleware here. Remember that
@@ -13,5 +14,6 @@ module.exports = function (app) {
   app.configure(signUpFull);
   app.configure(signOut);
   app.configure(signInByEmail);
+  app.configure(signInByUserName);
 
 };
