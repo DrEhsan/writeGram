@@ -12,7 +12,7 @@ module.exports =  {
           // Email error messages
 					case "InvalidEmailAddress": resBody = { innerCode: 19, reason: type}; statusCode = 406; break;
 					case "DuplicatedEmailAddress": resBody = { innerCode: 20, reason: type};  statusCode = 406; break;
-					case "EmailAddressNotConfirmed": resBody = { innerCode: 21, reason: type}; statusCode = 406; break;
+					case "EmailAddressNeedsConfirmation": resBody = { innerCode: 21, reason: type}; statusCode = 406; break;
           //--------------------------------------------------------------------------------------------------
 
           // Authentication error messages
@@ -22,7 +22,6 @@ module.exports =  {
 
           // Avatar & files
           case "AvatarNotUploaded" : resBody = { innerCode: 25, reason: type}; statusCode = 415; break;
-          case "signUpDoneBefore" : resBody = { innerCode: 25, reason: type}; statusCode = 406; break;
 
           // Length
           case "BadUserName" : resBody = { innerCode: 25, reason: type}; statusCode = 406; break;

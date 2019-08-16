@@ -1,6 +1,6 @@
 module.exports = function (app){
 
-    const ensureApiKey = require('./ensureApiKey');
+    const ensureApiKey = require('../ensureApiKey');
     const responder = require('./responser');
     const crypto = require('crypto')
 

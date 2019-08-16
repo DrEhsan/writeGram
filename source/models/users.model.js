@@ -2,35 +2,39 @@
 //
 // See http://mongoosejs.com/docs/models.html
 // for more of what you can do here.
+
 module.exports = function (app) {
   const mongooseClient = app.get('mongooseClient');
   const { Schema } = mongooseClient;
   const users = new Schema({
 
-        email :
-        {
-            address : {	type :String, index:{ unique: true, spare:	true}},
-            isConfirmed: { type: Boolean, default: false },
-            token: { type: String, default: ""}
-        },
+    email :
+    {
+      address : {	type :String, index:{ unique: true, spare:	true}},
+      isConfirmed: { type: Boolean, default: false },
+      token: { type: String, default: ""}
+    },
 
-        username :	{	type:String, index:{	unique: true, spare: true }},
+    username :	{	type:String, index:{	unique: true, spare: true }},
 
-        password: 	{	type:String },
+    password: 	{	type:String },
 
-        apiKey: { type:String, index:{	unique: true, spare: true }},
+    apiKey: { type:String, index:{	unique: true, spare: true }},
 
-        profile: {type: Schema.Types.ObjectId, ref: "profile"},
+    // 0 - just email submited, 1 - username and has submited, 2 - email confirmed
+    registerStatus : { type: Number, default: 0},
 
-        devices: {type: Schema.Types.ObjectId, ref: "devices"},
+    profile: {type: Schema.Types.ObjectId, ref: "profile"},
 
-        social : {type: Schema.Types.ObjectId, ref: "socials"}
+    devices: {type: Schema.Types.ObjectId, ref: "devices"},
+
+    social : {type: Schema.Types.ObjectId, ref: "socials"}
 
   }, {
     timestamps: true
-    });
+  });
 
-    users.pre('validate', function(next) {
+  users.pre('validate', function(next) {
 
     var crypto = require("crypto");
 

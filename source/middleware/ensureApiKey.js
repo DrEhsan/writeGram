@@ -2,7 +2,7 @@ const ensureApiKey =  (req, res, next) =>{
 
 	try{
 
-		const responder = require('./responser')
+		const responder = require('./Authentication/responser')
 
 		let app = req.app;
 

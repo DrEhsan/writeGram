@@ -4,7 +4,7 @@ module.exports = function (app){
   const responder = require('./responser')
   const multer = require('multer');
   const crypto = require('crypto');
-  const ensureApiKey = require('./ensureApiKey');
+  const ensureApiKey = require('../ensureApiKey');
   const sharp = require('sharp');
 
   const storage = multer.diskStorage({
@@ -85,7 +85,7 @@ module.exports = function (app){
 
     var users = await app.service('users').find({ query : { username: username }});
 
-    if (users.total > 1){
+    if (users.total >= 1){
       return responder.sendErrorResponse(res, 'DuplicatedUserName');
     }
 
@@ -99,7 +99,8 @@ module.exports = function (app){
       username: username,
       password: crypto.createHmac('sha256', username + email + "writeGram2019")
                       .update(username + "_" + password + "_" + email)
-                      .digest('hex')
+                      .digest('hex'),
+      registerStatus: 1
     }
 
     if (result == "AvatarNotUploaded"){

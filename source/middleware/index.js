@@ -1,19 +1,10 @@
-// eslint-disable-next-line no-unused-vars
 
-const signUpEmail = require('./signUpEmail')
-const signUpFull = require('./signUpFull')
-const signOut = require('./signOut')
-const signInByEmail = require('./signInByEmail')
-const signInByUserName = require('./signInByUserName')
+const authentication = require('./Authentication')
+const friendship = require('./FriendShip')
 
-module.exports = function (app) {
-  // Add your custom middleware here. Remember that
-  // in Express, the order matters.
+module.exports = function(app){
 
-  app.configure(signUpEmail);
-  app.configure(signUpFull);
-  app.configure(signOut);
-  app.configure(signInByEmail);
-  app.configure(signInByUserName);
+    app.configure(authentication);
+    app.configure(friendship);
 
-};
+}
