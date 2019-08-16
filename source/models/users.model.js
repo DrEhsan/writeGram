@@ -26,6 +26,16 @@ module.exports = function (app) {
 
     profile: {type: Schema.Types.ObjectId, ref: "profile"},
 
+    followers: [{
+      _id : false,
+      follower : {type: Schema.Types.ObjectId, ref: "users"}
+    }],
+
+    following: [{
+      _id : false,
+      following : {type: Schema.Types.ObjectId, ref: "users"}
+    }],
+
     devices: {type: Schema.Types.ObjectId, ref: "devices"},
 
     social : {type: Schema.Types.ObjectId, ref: "socials"}

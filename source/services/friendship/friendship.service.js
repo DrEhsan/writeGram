@@ -2,6 +2,7 @@
 const createService = require('feathers-mongoose');
 const createModel = require('../../models/friendship.model');
 const hooks = require('./friendship.hooks');
+const ensureApikey = require('../../middleware/ensureApiKey')
 
 module.exports = function (app) {
   const Model = createModel(app);
@@ -13,7 +14,7 @@ module.exports = function (app) {
   };
 
   // Initialize our service with any options it requires
-  app.use('/friendship', createService(options));
+  app.use('/friendship', ensureApikey, createService(options));
 
   // Get our initialized service so that we can register hooks
   const service = app.service('friendship');

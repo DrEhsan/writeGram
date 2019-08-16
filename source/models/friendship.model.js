@@ -17,6 +17,49 @@ module.exports = function (app) {
     timestamps: true
   });
 
+  friendshipSchema.statics.acceptFriendRequest = function (requesterId, requestedId){
+    var conditions = {
+      requester: requestedId,
+      requested: requesterId,
+      status: 'Pending'
+    };
+
+    var updates = {
+      status: 'Accepted',
+      dateAccepted: Date.now()
+    };
+
+    var options = { 'new': true };
+
+    return new Promise(resolve =>{
+      friendModel.findOneAndUpdate(conditions, updates, options)
+        .then(result =>{
+          if (result){
+            resolve(
+              result
+                .populate({ path : 'requester',  populate : { path : 'profile'}})
+                .populate({ path : 'requested',  populate : { path : 'profile'}})
+                .execPopulate()
+            )
+          }
+          else{
+            resolve({
+              error: true,
+              code: 26,
+              name: 'NoRequestHasDoneOrPending'
+            })
+          }
+        })
+        .catch(error => {
+          resolve({
+            error: true,
+            code: 26,
+            name: 'DbErrorSave'
+          })
+        })
+    })
+  }
+
 
   friendshipSchema.statics.doFriendRequest = function (requesterId, requestedId) {
     var conditions = {
@@ -37,14 +80,28 @@ module.exports = function (app) {
                             .execPopulate()
                        )
               })
-              .catch(error =>{ resolve({error: true, type: 'DataBase', msg: error}) })
+              .catch(error => {
+                resolve({
+                  error: true,
+                  code: 26,
+                  name: 'DbErrorSave'
+                })
+              })
           }
           else{
-            resolve({error: true, type: 'Internal', msg: (result.status === 'Pending' ? 'Pending': 'Freind')})
+            resolve({
+                      error: true,
+                      code: 26,
+                      name: (result.status === 'Pending') ? 'RequestIsPending': 'RequestersAreFriend'
+                    })
           }
         })
-        .catch(error=>{
-          resolve({error: true, type: 'DataBase', msg: error});
+        .catch(error => {
+          resolve({
+            error: true,
+            code: 26,
+            name: 'DbErrorSave'
+          });
         })
     })
   }

@@ -1,15 +1,85 @@
 
 const doFriendRequest = async cntx =>{
+
+  let requester = cntx.params.user;
   let friendShip = cntx.app.service('friendship').Model;
+  let {requestedUser} = cntx.data;
+  let promise = friendShip.doFriendRequest(requester, requestedUser);
+  let result = (await Promise.all([promise]))[0];
 
-  let {requester, requested} = cntx.data;
+  // error occured!
+  if (result.error){
+    var ResBody = {
+      status : false,
+      error: {
+        innerCode: result.name,
+        reason: result.code
+      }
+    }
 
-  let a = friendShip.doFriendRequest2(requester, requested);
-  let result = await Promise.all([a]);
-  console.log(result);
+    cntx.result = ResBody;
+    return cntx;
+  }
 
-  cntx.result = result[0];
+  // send result of request : To-Do -> build successful packet on after hook
+  cntx.result = result;
   return cntx;
+}
+
+const acceptFriendRequest = async cntx =>{
+  let requester = cntx.params.user;
+  let friendShip = cntx.app.service('friendship').Model;
+  let {requestedUser} = cntx.data;
+  let promise = friendShip.acceptFriendRequest(requester._id, requestedUser);
+  let result = (await Promise.all([promise]))[0];
+
+  // error occured!
+  if (result.error){
+    var ResBody = {
+      status : false,
+      error: {
+        innerCode: result.name,
+        reason: result.code
+      }
+    }
+
+    cntx.result = ResBody;
+    return cntx;
+  }
+
+  // send result of request : To-Do -> build successful packet on after hook
+  cntx.result = result;
+  return cntx;
+}
+
+const filterMethod = async cntx => {
+  let queryType = cntx.params.query;
+
+  if (queryType.$doFriendRequest){
+    return await doFriendRequest(cntx);
+  }
+
+  if (queryType.$acceptFriendRequest){
+    return await acceptFriendRequest(cntx);
+  }
+
+  cntx.result = {
+    status : false,
+      error: {
+        innerCode: 26,
+        reason: "MethodNotAllowed"
+      }
+  }
+
+  return cntx;
+}
+
+const fetchError = cntx => {
+
+
+
+
+
 }
 
 module.exports = {
@@ -19,7 +89,7 @@ module.exports = {
     get: [],
     create: [doFriendRequest],
     update: [],
-    patch: [],
+    patch: [acceptFriendRequest],
     remove: []
   },
 
@@ -34,7 +104,7 @@ module.exports = {
   },
 
   error: {
-    all: [],
+    all: [fetchError],
     find: [],
     get: [],
     create: [],
