@@ -14,7 +14,8 @@ module.exports = function (app) {
     dateSent: { type: Date, default: Date.now, index: true },
     dateAccepted: { type: Date, required: false, index: true }
   }, {
-    timestamps: true
+    timestamps: true,
+    versionKey: false
   });
 
   friendshipSchema.statics.acceptFriendRequest = function (requesterId, requestedId){
@@ -37,8 +38,8 @@ module.exports = function (app) {
           if (result){
             resolve(
               result
-                .populate({ path : 'requester',  populate : { path : 'profile'}})
-                .populate({ path : 'requested',  populate : { path : 'profile'}})
+                .populate({ path : 'requester',  select: { '_id': 1, 'username':1 }, populate : { path : 'profile'}})
+                .populate({ path : 'requested',  select: { '_id': 1, 'username':1 }, populate : { path : 'profile'}})
                 .execPopulate()
             )
           }
@@ -64,19 +65,23 @@ module.exports = function (app) {
   friendshipSchema.statics.doFriendRequest = function (requesterId, requestedId) {
     var conditions = {
       requester: requesterId,
-      requested: requestedId
+      requested: requestedId,
     };
 
     return new Promise(resolve =>{
       friendModel.findOne((conditions))
         .then(result => {
           if (result == null){
+            //conditions.lean = false;
             const newfriendShip = new friendModel(conditions);
-              newfriendShip.save().then(newfriend =>{
+              newfriendShip.save().then(newfriend => {
+                //newfriend = newfriend;
+                //delete newfriend._id;
+                console.log()
                 resolve(
                           newfriend
-                            .populate({ path : 'requester',  populate : { path : 'profile'}})
-                            .populate({ path : 'requested',  populate : { path : 'profile'}})
+                            .populate({ path : 'requester',  select: { '_id': 1, 'username':1 }, populate : { path : 'profile'}})
+                            .populate({ path : 'requested',  select: { '_id': 1, 'username':1 },  populate : { path : 'profile'}})
                             .execPopulate()
                        )
               })

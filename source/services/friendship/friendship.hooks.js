@@ -1,10 +1,18 @@
 
-const doFriendRequest = async cntx =>{
+const { iff, discard, isProvider } = require('feathers-hooks-common')
 
+const requestDispatcher = async (cntx, method) => {
   let requester = cntx.params.user;
   let friendShip = cntx.app.service('friendship').Model;
-  let {requestedUser} = cntx.data;
-  let promise = friendShip.doFriendRequest(requester, requestedUser);
+  let { requestedUser } = cntx.data;
+
+  let promise = null;
+
+  switch(method){
+    case 'doFriendRequest': promise = friendShip.doFriendRequest(requester._id, requestedUser); break;
+    case 'acceptFriendRequest': promise = friendShip.acceptFriendRequest(requester._id, requestedUser); break;
+  }
+
   let result = (await Promise.all([promise]))[0];
 
   // error occured!
@@ -22,35 +30,26 @@ const doFriendRequest = async cntx =>{
   }
 
   // send result of request : To-Do -> build successful packet on after hook
-  cntx.result = result;
+
+  result = result.toObject();
+
+  result.requester.userId = result.requester._id;
+  result.requested.userId = result.requested._id;
+  result.requester.profile.profileId = result.requester.profile._id;
+  result.requested.profile.profileId = result.requested.profile._id;
+
+  delete result.requester._id;
+  delete result.requested._id;
+  delete result.requester.profile._id;
+  delete result.requested.profile._id;
+  delete result._id;
+
+  cntx.result = { status: true, payload : result};
   return cntx;
 }
 
-const acceptFriendRequest = async cntx =>{
-  let requester = cntx.params.user;
-  let friendShip = cntx.app.service('friendship').Model;
-  let {requestedUser} = cntx.data;
-  let promise = friendShip.acceptFriendRequest(requester._id, requestedUser);
-  let result = (await Promise.all([promise]))[0];
-
-  // error occured!
-  if (result.error){
-    var ResBody = {
-      status : false,
-      error: {
-        innerCode: result.name,
-        reason: result.code
-      }
-    }
-
-    cntx.result = ResBody;
-    return cntx;
-  }
-
-  // send result of request : To-Do -> build successful packet on after hook
-  cntx.result = result;
-  return cntx;
-}
+const doFriendRequest = async cntx => { return await requestDispatcher(cntx, 'doFriendRequest'); }
+const acceptFriendRequest = async cntx => { return await requestDispatcher(cntx, 'acceptFriendRequest'); }
 
 const filterMethod = async cntx => {
   let queryType = cntx.params.query;
@@ -74,9 +73,9 @@ const filterMethod = async cntx => {
   return cntx;
 }
 
-const fetchError = cntx => {
+const filterFields = cntx => {
 
-
+  console.log('fetchError2')
 
 
 
@@ -97,14 +96,21 @@ module.exports = {
     all: [],
     find: [],
     get: [],
-    create: [],
+    create: [/*iff(isProvider('external'),
+                  discard('requester.token'),
+                  discard('requester.isConfirmed'),
+                  discard('requester.apiKey'),
+                  discard('requester.__v'),
+                  discard('requester.password'),
+                  discard('requester.__v'),
+  )*/],
     update: [],
     patch: [],
     remove: []
   },
 
   error: {
-    all: [fetchError],
+    all: [],
     find: [],
     get: [],
     create: [],

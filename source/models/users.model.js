@@ -41,7 +41,8 @@ module.exports = function (app) {
     social : {type: Schema.Types.ObjectId, ref: "socials"}
 
   }, {
-    timestamps: true
+    timestamps: true,
+    versionKey: false
   });
 
   users.pre('validate', function(next) {
