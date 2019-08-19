@@ -1,16 +1,23 @@
 
 const { iff, discard, isProvider } = require('feathers-hooks-common')
 
+const doFriendRequest = async cntx => { return await requestDispatcher(cntx, 'doFriendRequest'); }
+const acceptFriendRequest = async cntx => { return await requestDispatcher(cntx, 'acceptFriendRequest'); }
+
 const requestDispatcher = async (cntx, method) => {
   let requester = cntx.params.user;
   let friendShip = cntx.app.service('friendship').Model;
-  let { requestedUser } = cntx.data;
+  let { requestedUser } = cntx.data != undefined ? cntx.data  : cntx.params.body;
 
   let promise = null;
+  let customizeBody = false;
+  let statusCode = 202;
 
   switch(method){
-    case 'doFriendRequest': promise = friendShip.doFriendRequest(requester._id, requestedUser); break;
-    case 'acceptFriendRequest': promise = friendShip.acceptFriendRequest(requester._id, requestedUser); break;
+    case 'doFriendRequest': promise = friendShip.doFriendRequest(requester._id, requestedUser); customizeBody = true; break;
+    case 'acceptFriendRequest': promise = friendShip.acceptFriendRequest(requester._id, requestedUser); customizeBody = true; break;
+    case 'cancelFriendRequest':  promise = friendShip.cancelFriendRequest(requester._id, requestedUser); break;
+    case 'denyFriendRequest':  promise = friendShip.denyFriendRequest(requester._id, requestedUser); break;
   }
 
   let result = (await Promise.all([promise]))[0];
@@ -18,6 +25,7 @@ const requestDispatcher = async (cntx, method) => {
   // error occured!
   if (result.error){
     var ResBody = {
+      statusCode : 500,
       status : false,
       error: {
         innerCode: result.name,
@@ -29,37 +37,41 @@ const requestDispatcher = async (cntx, method) => {
     return cntx;
   }
 
-  // send result of request : To-Do -> build successful packet on after hook
+  if (method == "acceptFriendRequest"){
+    let userModel = cntx.app.service('users').Model;
+    userModel.addFollow(requestedUser, requester._id)
+  }
 
-  result = result.toObject();
+  if (customizeBody){
+    // send result of request : To-Do -> build successful packet on after hook
+    statusCode = 201;
+    result = result.toObject();
 
-  result.requester.userId = result.requester._id;
-  result.requested.userId = result.requested._id;
-  result.requester.profile.profileId = result.requester.profile._id;
-  result.requested.profile.profileId = result.requested.profile._id;
+    result.requester.userId = result.requester._id;
+    result.requested.userId = result.requested._id;
+    result.requester.profile.profileId = result.requester.profile._id;
+    result.requested.profile.profileId = result.requested.profile._id;
 
-  delete result.requester._id;
-  delete result.requested._id;
-  delete result.requester.profile._id;
-  delete result.requested.profile._id;
-  delete result._id;
+    delete result.requester._id;
+    delete result.requested._id;
+    delete result.requester.profile._id;
+    delete result.requested.profile._id;
+    delete result._id;
+  }
 
-  cntx.result = { status: true, payload : result};
+  cntx.result = { statusCode: statusCode, status: true, payload : result};
   return cntx;
 }
 
-const doFriendRequest = async cntx => { return await requestDispatcher(cntx, 'doFriendRequest'); }
-const acceptFriendRequest = async cntx => { return await requestDispatcher(cntx, 'acceptFriendRequest'); }
-
-const filterMethod = async cntx => {
+const filterRemoveMethod = async cntx => {
   let queryType = cntx.params.query;
 
-  if (queryType.$doFriendRequest){
-    return await doFriendRequest(cntx);
+  if (queryType.$cancelFriendRequest){
+    return await requestDispatcher(cntx, 'cancelFriendRequest');
   }
 
-  if (queryType.$acceptFriendRequest){
-    return await acceptFriendRequest(cntx);
+  if (queryType.$denyFriendRequest){
+    return await requestDispatcher(cntx, 'denyFriendRequest');
   }
 
   cntx.result = {
@@ -73,14 +85,6 @@ const filterMethod = async cntx => {
   return cntx;
 }
 
-const filterFields = cntx => {
-
-  console.log('fetchError2')
-
-
-
-}
-
 module.exports = {
   before: {
     all: [],
@@ -89,7 +93,7 @@ module.exports = {
     create: [doFriendRequest],
     update: [],
     patch: [acceptFriendRequest],
-    remove: []
+    remove: [filterRemoveMethod]
   },
 
   after: {

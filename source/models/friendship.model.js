@@ -4,8 +4,8 @@
 // for more of what you can do here.
 module.exports = function (app) {
   const mongooseClient = app.get('mongooseClient');
-  const userModel = require('./users.model');
 
+  const userModel = require('./users.model')
   const { Schema } = mongooseClient;
   const friendshipSchema = new Schema({
     requester: { type: Schema.Types.ObjectId, ref: 'users', required: true, index: true },
@@ -17,6 +17,48 @@ module.exports = function (app) {
     timestamps: true,
     versionKey: false
   });
+
+  friendshipSchema.statics.denyFriendRequest = function (requesterId, requestedId){
+    var conditions = {
+      requester: requestedId,
+      requested: requesterId,
+      status: 'Pending'
+    };
+
+    return new Promise(resolve =>{
+      friendModel.findOneAndRemove(conditions).then(removed => {
+        if (removed){
+          resolve({ denieded : true })
+        }
+        else{
+          resolve({ error: true, code: 26, name: 'NoReCordFoundToBeRemoved'})
+        }
+      }).catch(error =>{
+        resolve({ error: true, code: 26, name: 'DbErrorSave'})
+      })
+    })
+  }
+
+  friendshipSchema.statics.cancelFriendRequest = function (requesterId, requestedId){
+    var conditions = {
+      requester: requesterId,
+      requested: requestedId,
+      status: 'Pending'
+    };
+
+    return new Promise(resolve =>{
+      friendModel.findOneAndRemove(conditions).then(removed => {
+        if (removed){
+          resolve({ canceled : true })
+        }
+        else{
+          resolve({ error: true, code: 26, name: 'NoReCordFoundToBeRemoved'})
+        }
+      }).catch(error =>{
+        resolve({ error: true, code: 26, name: 'DbErrorSave'})
+      })
+    })
+  }
 
   friendshipSchema.statics.acceptFriendRequest = function (requesterId, requestedId){
     var conditions = {
@@ -36,6 +78,7 @@ module.exports = function (app) {
       friendModel.findOneAndUpdate(conditions, updates, options)
         .then(result =>{
           if (result){
+            //userModel.addFollow(requestedId, requesterId);
             resolve(
               result
                 .populate({ path : 'requester',  select: { '_id': 1, 'username':1 }, populate : { path : 'profile'}})
@@ -44,19 +87,11 @@ module.exports = function (app) {
             )
           }
           else{
-            resolve({
-              error: true,
-              code: 26,
-              name: 'NoRequestHasDoneOrPending'
-            })
+            resolve({ error: true, code: 26, name: 'NoRequestHasDoneOrPending'})
           }
         })
         .catch(error => {
-          resolve({
-            error: true,
-            code: 26,
-            name: 'DbErrorSave'
-          })
+          resolve({ error: true, code: 26, name: 'DbErrorSave'})
         })
     })
   }
@@ -75,9 +110,6 @@ module.exports = function (app) {
             //conditions.lean = false;
             const newfriendShip = new friendModel(conditions);
               newfriendShip.save().then(newfriend => {
-                //newfriend = newfriend;
-                //delete newfriend._id;
-                console.log()
                 resolve(
                           newfriend
                             .populate({ path : 'requester',  select: { '_id': 1, 'username':1 }, populate : { path : 'profile'}})
@@ -86,27 +118,15 @@ module.exports = function (app) {
                        )
               })
               .catch(error => {
-                resolve({
-                  error: true,
-                  code: 26,
-                  name: 'DbErrorSave'
-                })
+                resolve({ error: true, code: 26, name: 'DbErrorSave'})
               })
           }
           else{
-            resolve({
-                      error: true,
-                      code: 26,
-                      name: (result.status === 'Pending') ? 'RequestIsPending': 'RequestersAreFriend'
-                    })
+            resolve({error: true, code: 26, name: (result.status === 'Pending') ? 'RequestIsPending': 'RequestersAreFriend'})
           }
         })
         .catch(error => {
-          resolve({
-            error: true,
-            code: 26,
-            name: 'DbErrorSave'
-          });
+          resolve({ error: true, code: 26, name: 'DbErrorSave'});
         })
     })
   }

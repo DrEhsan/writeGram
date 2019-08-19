@@ -35,8 +35,23 @@ app.use(favicon(path.join(app.get('public'), 'favicon.ico')));
 // Host the public folder
 app.use('/', express.static(app.get('public')));
 
+function restFormatter(req, res) {
+  res.format({
+    'application/json': function() {
+      const data = res.data;
+      if (data.statusCode){
+        let status = data.statusCode;
+        delete data.statusCode;
+        res.status(status || 200);
+        res.json(data);
+      }
+    }
+  });
+}
+
+
 // Set up Plugins and providers
-app.configure(express.rest());
+app.configure(express.rest(restFormatter));
 app.configure(socketio());
 
 app.configure(mongoose);

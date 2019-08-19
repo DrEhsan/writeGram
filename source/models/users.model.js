@@ -6,7 +6,7 @@
 module.exports = function (app) {
   const mongooseClient = app.get('mongooseClient');
   const { Schema } = mongooseClient;
-  const users = new Schema({
+  const usersSchema = new Schema({
 
     email :
     {
@@ -26,15 +26,9 @@ module.exports = function (app) {
 
     profile: {type: Schema.Types.ObjectId, ref: "profile"},
 
-    followers: [{
-      _id : false,
-      follower : {type: Schema.Types.ObjectId, ref: "users"}
-    }],
+    followers: [{type: Schema.Types.ObjectId, ref: "users", unique: true}],
 
-    following: [{
-      _id : false,
-      following : {type: Schema.Types.ObjectId, ref: "users"}
-    }],
+    following: [{type: Schema.Types.ObjectId, ref: "users", unique: true}],
 
     devices: {type: Schema.Types.ObjectId, ref: "devices"},
 
@@ -45,7 +39,7 @@ module.exports = function (app) {
     versionKey: false
   });
 
-  users.pre('validate', function(next) {
+  usersSchema.pre('validate', function(next) {
 
     var crypto = require("crypto");
 
@@ -63,5 +57,18 @@ module.exports = function (app) {
     next();
   });
 
-  return mongooseClient.model('users', users);
+  /**
+   * add all follower and following after accepting for both follower and following
+   * @function    userModel.addFollow
+   * @param       {ObjectId}  follower      - the _id of user who asked to follow
+   * @param       {ObjectId}  tobeFollow      - the _id of user who asked to be follow
+   */
+  usersSchema.statics.addFollow = function (follower, tobeFollow){
+    usersModel.findOneAndUpdate({ _id: tobeFollow}, { $push: { followers: follower  } }).exec()
+    usersModel.findOneAndUpdate({ _id: follower}, { $push: { following: tobeFollow  } }).exec()
+  }
+
+  var usersModel = mongooseClient.model('users', usersSchema);
+
+  return usersModel;
 };
