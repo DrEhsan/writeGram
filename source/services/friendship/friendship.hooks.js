@@ -18,28 +18,23 @@ const requestDispatcher = async (cntx, method) => {
     case 'acceptFriendRequest': promise = friendShip.acceptFriendRequest(requester._id, requestedUser); customizeBody = true; break;
     case 'cancelFriendRequest':  promise = friendShip.cancelFriendRequest(requester._id, requestedUser); break;
     case 'denyFriendRequest':  promise = friendShip.denyFriendRequest(requester._id, requestedUser); break;
+    case 'unFollow' : promise = friendShip.unFollow(requester._id, requestedUser); break;
   }
 
   let result = (await Promise.all([promise]))[0];
 
   // error occured!
   if (result.error){
-    var ResBody = {
-      statusCode : 500,
-      status : false,
-      error: {
-        innerCode: result.name,
-        reason: result.code
-      }
-    }
-
+    var ResBody = { statusCode : 500, status : false, error: { innerCode: result.name, reason: result.code }}
     cntx.result = ResBody;
     return cntx;
   }
 
-  if (method == "acceptFriendRequest"){
-    let userModel = cntx.app.service('users').Model;
-    userModel.addFollow(requestedUser, requester._id)
+  // some methods needs editation in users model
+  let userModel = cntx.app.service('users').Model;
+  switch(method){
+    case "acceptFriendRequest" : userModel.addFollow(requestedUser, requester._id); break;
+    case "unFollow" : userModel.removeFollow(requestedUser, requester._id); break;
   }
 
   if (customizeBody){
@@ -69,19 +64,14 @@ const filterRemoveMethod = async cntx => {
   if (queryType.$cancelFriendRequest){
     return await requestDispatcher(cntx, 'cancelFriendRequest');
   }
-
-  if (queryType.$denyFriendRequest){
+  else if (queryType.$denyFriendRequest){
     return await requestDispatcher(cntx, 'denyFriendRequest');
   }
-
-  cntx.result = {
-    status : false,
-      error: {
-        innerCode: 26,
-        reason: "MethodNotAllowed"
-      }
+  else if (queryType.$unFollow){
+    return await requestDispatcher(cntx, 'unFollow');
   }
 
+  cntx.result = { status : false, error: { innerCode: 26, reason: "MethodNotAllowed"} }
   return cntx;
 }
 

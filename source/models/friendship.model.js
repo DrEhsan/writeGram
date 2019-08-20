@@ -18,6 +18,27 @@ module.exports = function (app) {
     versionKey: false
   });
 
+  friendshipSchema.statics.unFollow = function (requesterId, requestedId){
+    var conditions = {
+      requester: requesterId,
+      requested: requestedId,
+      status: 'Accepted'
+    };
+
+    return new Promise(resolve =>{
+      friendModel.findOneAndRemove(conditions).then(removed => {
+        if (removed){
+          resolve({ unFollowed : true })
+        }
+        else{
+          resolve({ error: true, code: 26, name: 'NoReCordFoundToBeRemoved'})
+        }
+      }).catch(error =>{
+        resolve({ error: true, code: 26, name: 'DbErrorSave'})
+      })
+    })
+  }
+
   friendshipSchema.statics.denyFriendRequest = function (requesterId, requestedId){
     var conditions = {
       requester: requestedId,

@@ -1,4 +1,4 @@
-const ensureApiKey =  (req, res, next) =>{
+const ensureApiKey =  async (req, res, next) =>{
 
 	try{
 
@@ -10,20 +10,18 @@ const ensureApiKey =  (req, res, next) =>{
 			return responder.sendErrorResponse(res, "NoAuthHeader");
 		}
 
-		let apiKey = req.headers.apikey;
+    let apiKey = req.headers.apikey;
 
-		app.service('users').find({ query: { apiKey: apiKey}})
-			.then(user=>{
-				if (user.total < 1){
-					return responder.sendErrorResponse(res, "NotAuthorized");
-				}
+    let user = await app.service('users').find({ query: { apiKey: apiKey}});
 
-				req.feathers.user = user.data[0];
-				next();
-			})
-			.catch(error => {
-				return responder.sendErrorResponse(res, "CatchError", error);
-			})
+    if (user.total < 1){
+      return responder.sendErrorResponse(res, "NotAuthorized");
+    }
+
+
+
+    req.feathers.user = user.data[0];
+    return next();
 	}
 	catch (error){
 		return responder.sendErrorResponse(res, "CatchError", error);
