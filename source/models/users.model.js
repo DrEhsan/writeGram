@@ -73,6 +73,13 @@ module.exports = function (app) {
     usersModel.findOneAndUpdate({ _id: requested}, { $pull: { following: requester  } }).exec()
   }
 
+  usersSchema.statics.removeFollower = function (requester, requested){
+    usersModel.findOneAndUpdate({ _id: requested}, { $pull: { followers: requester  } }).exec()
+    usersModel.findOneAndUpdate({ _id: requester}, { $pull: { following: requested  } }).exec()
+  }
+
+
+
   var usersModel = mongooseClient.model('users', usersSchema);
 
   return usersModel;

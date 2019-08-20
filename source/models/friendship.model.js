@@ -18,6 +18,30 @@ module.exports = function (app) {
     versionKey: false
   });
 
+  // remove from follow list
+  friendshipSchema.statics.removeFollower = function (accountTobeRemove, mainAccount){
+    var conditions = {
+      requester: mainAccount,
+      requested: accountTobeRemove,
+      status: 'Accepted'
+    };
+
+    console.log(accountTobeRemove)
+
+    return new Promise(resolve => {
+      friendModel.findOneAndRemove(conditions).then(removed => {
+        if (removed){
+          resolve({ removedFollower : true })
+        }
+        else{
+          resolve({ error: true, code: 26, name: 'NoReCordFoundToBeRemoved'})
+        }
+      }).catch(error =>{
+        resolve({ error: true, code: 26, name: 'DbErrorSave'})
+      })
+    })
+  }
+
   friendshipSchema.statics.unFollow = function (requesterId, requestedId){
     var conditions = {
       requester: requesterId,
@@ -95,7 +119,7 @@ module.exports = function (app) {
 
     var options = { 'new': true };
 
-    return new Promise(resolve =>{
+    return new Promise(resolve => {
       friendModel.findOneAndUpdate(conditions, updates, options)
         .then(result =>{
           if (result){

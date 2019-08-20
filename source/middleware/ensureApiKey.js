@@ -21,7 +21,7 @@ const ensureApiKey =  async (req, res, next) =>{
 
 
     req.feathers.user = user.data[0];
-    return next();
+    next();
 	}
 	catch (error){
 		return responder.sendErrorResponse(res, "CatchError", error);

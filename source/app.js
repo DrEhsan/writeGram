@@ -45,6 +45,10 @@ function restFormatter(req, res) {
         res.status(status || 200);
         res.json(data);
       }
+      else
+      {
+        res.json(data);
+      }
     }
   });
 }

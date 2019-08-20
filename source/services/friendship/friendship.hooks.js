@@ -4,6 +4,26 @@ const { iff, discard, isProvider } = require('feathers-hooks-common')
 const doFriendRequest = async cntx => { return await requestDispatcher(cntx, 'doFriendRequest'); }
 const acceptFriendRequest = async cntx => { return await requestDispatcher(cntx, 'acceptFriendRequest'); }
 
+const filterRemoveMethod = async cntx => {
+  let queryType = cntx.params.query;
+
+  if (queryType.$cancelFriendRequest){
+    return await requestDispatcher(cntx, 'cancelFriendRequest');
+  }
+  else if (queryType.$denyFriendRequest){
+    return await requestDispatcher(cntx, 'denyFriendRequest');
+  }
+  else if (queryType.$unFollow){
+    return await requestDispatcher(cntx, 'unFollow');
+  }
+  else if (queryType.$removeFollower){
+    return await requestDispatcher(cntx, 'removeFollower');
+  }
+
+  cntx.result = { status : false, error: { innerCode: 26, reason: "MethodNotAllowed"} }
+  return cntx;
+}
+
 const requestDispatcher = async (cntx, method) => {
   let requester = cntx.params.user;
   let friendShip = cntx.app.service('friendship').Model;
@@ -19,6 +39,7 @@ const requestDispatcher = async (cntx, method) => {
     case 'cancelFriendRequest':  promise = friendShip.cancelFriendRequest(requester._id, requestedUser); break;
     case 'denyFriendRequest':  promise = friendShip.denyFriendRequest(requester._id, requestedUser); break;
     case 'unFollow' : promise = friendShip.unFollow(requester._id, requestedUser); break;
+    case 'removeFollower' : promise = friendShip.removeFollower(requester._id, requestedUser); break;
   }
 
   let result = (await Promise.all([promise]))[0];
@@ -35,6 +56,7 @@ const requestDispatcher = async (cntx, method) => {
   switch(method){
     case "acceptFriendRequest" : userModel.addFollow(requestedUser, requester._id); break;
     case "unFollow" : userModel.removeFollow(requestedUser, requester._id); break;
+    case "removeFollower" : userModel.removeFollower(requestedUser, requester._id); break;
   }
 
   if (customizeBody){
@@ -57,28 +79,28 @@ const requestDispatcher = async (cntx, method) => {
   cntx.result = { statusCode: statusCode, status: true, payload : result};
   return cntx;
 }
+/*
+const getPendingRequests = async cntx =>{
+  let requester = cntx.params.user;
+  let result = await app.service('friendship').find({
+    query :
+    {
+      $limit: 10,
+      $sort: { dateSent: -1 },
+      requested : requester._id,
+      status: 'Pending'
+    }
+  })
+}*/
 
-const filterRemoveMethod = async cntx => {
-  let queryType = cntx.params.query;
+const reBuildFind = cntx => {
 
-  if (queryType.$cancelFriendRequest){
-    return await requestDispatcher(cntx, 'cancelFriendRequest');
-  }
-  else if (queryType.$denyFriendRequest){
-    return await requestDispatcher(cntx, 'denyFriendRequest');
-  }
-  else if (queryType.$unFollow){
-    return await requestDispatcher(cntx, 'unFollow');
-  }
-
-  cntx.result = { status : false, error: { innerCode: 26, reason: "MethodNotAllowed"} }
-  return cntx;
 }
 
 module.exports = {
   before: {
     all: [],
-    find: [],
+    find: [find2],
     get: [],
     create: [doFriendRequest],
     update: [],
