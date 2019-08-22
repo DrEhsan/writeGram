@@ -1,10 +1,10 @@
 
-const { iff, discard, isProvider } = require('feathers-hooks-common')
+//const { iff, discard, isProvider } = require('feathers-hooks-common')
 
 const doFriendRequest = async cntx => { return await requestDispatcher(cntx, 'doFriendRequest'); }
 const acceptFriendRequest = async cntx => { return await requestDispatcher(cntx, 'acceptFriendRequest'); }
 
-const filterRemoveMethod = async cntx => {
+const filterQuery = async cntx => {
   let queryType = cntx.params.query;
 
   if (queryType.$cancelFriendRequest){
@@ -18,6 +18,12 @@ const filterRemoveMethod = async cntx => {
   }
   else if (queryType.$removeFollower){
     return await requestDispatcher(cntx, 'removeFollower');
+  }
+  else if (queryType.$getFriendRequests){
+    return await getPendingRequests(cntx);
+  }
+  else if (queryType.$getFollowers){
+    return await getFollowers(cntx);
   }
 
   cntx.result = { status : false, error: { innerCode: 26, reason: "MethodNotAllowed"} }
@@ -79,47 +85,235 @@ const requestDispatcher = async (cntx, method) => {
   cntx.result = { statusCode: statusCode, status: true, payload : result};
   return cntx;
 }
-/*
-const getPendingRequests = async cntx =>{
-  let requester = cntx.params.user;
-  let result = await app.service('friendship').find({
-    query :
-    {
-      $limit: 10,
-      $sort: { dateSent: -1 },
-      requested : requester._id,
-      status: 'Pending'
+
+const getPendingRequests = async cntx => {
+  let query = [{
+    $match: {
+      "requested" : cntx.params.user_id,
+      "status" : 'Pendings'
+     }
+  }, {
+    $lookup: {
+      from: "users",
+      localField: "requester",
+      foreignField: "_id",
+      as: "requester"
     }
-  })
-}*/
+  }, {
+    $unwind: {
+      path: "$requester",
+      preserveNullAndEmptyArrays: true
+    }
+  },{
+    $lookup: {
+      from: "profiles",
+      localField: "requester.profile",
+      foreignField: "_id",
+      as: "requester.profile",
+    }
+  },{
+    $unwind: {
+      path: "$requester.profile",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    $addFields: {"requester.userId": "$requester._id"},
+    $addFields: {"requester.profile.profileId": "$requester.profile._id"},
+  },
+  {
+    $project: {
+      _id: 0,
+      "requester._id": 0,
+      "requester.email": 0,
+      "requester.registerStatus": 0,
+      "requester.apiKey": 0,
+      "requester.password": 0,
+      "requester.profile._id": 0,
+      "requester.profile.__v": 0,
+    }
+  }]
 
-const reBuildFind = cntx => {
+  let result = await cntx.app.service('friendship').Model.aggregate(query).exec();
+  cntx.result = {
+    status : true,
+    payload: {
+      requestsCount : result.length,
+      requests: result
+    }
+  }
 
+  return cntx;
 }
+
+const getFollowers = async cntx => {
+
+  let conditions = {
+    _id: cntx.params.user._id,
+  }
+
+  let skip = cntx.params.query.$skip != undefined ? Number(cntx.params.query.$skip) : 0;
+  let limit = cntx.params.query.$limit != undefined ? Number(cntx.params.query.$limit) : 1;
+
+  let res = await cntx.app.service('users').Model
+              .findOne(conditions)
+              .populate({
+                  path : 'followers',
+                  select: {
+                    '_id': 1,
+                    'username': 1
+                  },
+                  populate :
+                  {
+                    path : 'profile',
+                    select: {
+                      '_id': 1,
+                      'avatar': 1
+                    }
+                  }
+              })
+              .slice('followers', [skip, skip + limit])
+              .select(['followers'])
+              .exec();
+
+  cntx.result = res;
+  return cntx;
+}
+
+const getFollowings = async cntx => {
+
+  let conditions = {
+    _id: cntx.params.user._id,
+  }
+
+  let skip = cntx.params.query.$skip != undefined ? Number(cntx.params.query.$skip) : 0;
+  let limit = cntx.params.query.$limit != undefined ? Number(cntx.params.query.$limit) : 1;
+
+  let res = await cntx.app.service('users').Model
+              .findOne(conditions)
+              .populate({
+                  path : 'followings',
+                  select: {
+                    '_id': 1,
+                    'username': 1
+                  },
+                  populate :
+                  {
+                    path : 'profile',
+                    select: {
+                      '_id': 1,
+                      'avatar': 1
+                    }
+                  }
+              })
+              .slice('followings', [skip, skip + limit])
+              .select(['followings'])
+              .exec();
+
+  cntx.result = res;
+  return cntx;
+}
+
+const buildFollowingsPacket = cntx => {
+
+  cntx.result = cntx.result.toObject();
+
+  delete cntx.result._id;
+
+  let followings = cntx.result.followings;
+
+  let _followings = [];
+  followings.forEach(following => {
+
+    following.profile.profileId = following.profile._id;
+
+    delete following.profile._id;
+
+    var newfollowing = {
+      followingId : following._id,
+      username : following.username,
+      profile : following.profile,
+    }
+
+    _followings.push(newfollowing)
+  });
+
+  delete cntx.result.followings;
+  cntx.result.followings = _followings;
+}
+
+const buildFollowersPacket = cntx => {
+
+  cntx.result = cntx.result.toObject();
+
+  delete cntx.result._id;
+
+  let followers = cntx.result.followers;
+
+  let _followers = [];
+  followers.forEach(follower => {
+
+    follower.profile.profileId = follower.profile._id;
+
+    delete follower.profile._id;
+
+    var newfollower = {
+      followerId : follower._id,
+      username : follower.username,
+      profile : follower.profile,
+    }
+
+    _followers.push(newfollower)
+  });
+
+  delete cntx.result.followers;
+  cntx.result.followers = _followers;
+}
+
+const buildFinalOutPut = (cntx, following = false) => {
+
+  if (following){
+    let res = {
+      status : true,
+      payload : {
+        followingsCount : cntx.result.following.length,
+        following : cntx.result.following
+      }
+    }
+
+    cntx.result = res;
+    return cntx;
+  }
+
+  let res = {
+    status : true,
+    payload : {
+      followersCount : cntx.result.followers.length,
+      followers : cntx.result.followers
+    }
+  }
+
+  cntx.result = res;
+  return cntx;
+}
+
 
 module.exports = {
   before: {
     all: [],
-    find: [find2],
+    find: [filterQuery],
     get: [],
     create: [doFriendRequest],
     update: [],
     patch: [acceptFriendRequest],
-    remove: [filterRemoveMethod]
+    remove: [filterQuery]
   },
 
   after: {
     all: [],
-    find: [],
+    find: [buildFollowersPacket, buildFinalOutPut],
     get: [],
-    create: [/*iff(isProvider('external'),
-                  discard('requester.token'),
-                  discard('requester.isConfirmed'),
-                  discard('requester.apiKey'),
-                  discard('requester.__v'),
-                  discard('requester.password'),
-                  discard('requester.__v'),
-  )*/],
+    create: [],
     update: [],
     patch: [],
     remove: []

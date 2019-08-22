@@ -21,7 +21,7 @@ const mongoose = require('./mongoose');
 
 const app = express(feathers());
 
-app.use(expressip().getIpInfoMiddleware);
+//app.use(expressip().getIpInfoMiddleware);
 // Load app configuration
 app.configure(configuration());
 // Enable security, CORS, compression, favicon and body parsing
