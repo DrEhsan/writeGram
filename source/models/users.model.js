@@ -28,7 +28,7 @@ module.exports = function (app) {
 
     followers: [{type: Schema.Types.ObjectId, ref: "users", unique: true}],
 
-    following: [{type: Schema.Types.ObjectId, ref: "users", unique: true}],
+    followings: [{type: Schema.Types.ObjectId, ref: "users", unique: true}],
 
     devices: {type: Schema.Types.ObjectId, ref: "devices"},
 

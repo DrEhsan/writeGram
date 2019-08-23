@@ -25,6 +25,9 @@ const filterQuery = async cntx => {
   else if (queryType.$getFollowers){
     return await getFollowers(cntx);
   }
+  else if (queryType.$getFollowings){
+    return await getFollowings(cntx);
+  }
 
   cntx.result = { status : false, error: { innerCode: 26, reason: "MethodNotAllowed"} }
   return cntx;
@@ -216,68 +219,71 @@ const getFollowings = async cntx => {
 
 const buildFollowingsPacket = cntx => {
 
-  cntx.result = cntx.result.toObject();
+  if (cntx.params.query.$getFollowings){
 
-  delete cntx.result._id;
+    cntx.result = cntx.result.toObject();
 
-  let followings = cntx.result.followings;
+    delete cntx.result._id;
 
-  let _followings = [];
-  followings.forEach(following => {
+    let followings = cntx.result.followings;
 
-    following.profile.profileId = following.profile._id;
+    let _followings = [];
+    followings.forEach(following => {
 
-    delete following.profile._id;
+      following.profile.profileId = following.profile._id;
 
-    var newfollowing = {
-      followingId : following._id,
-      username : following.username,
-      profile : following.profile,
-    }
+      delete following.profile._id;
 
-    _followings.push(newfollowing)
-  });
+      var newfollowing = {
+        followingId : following._id,
+        username : following.username,
+        profile : following.profile,
+      }
 
-  delete cntx.result.followings;
-  cntx.result.followings = _followings;
+      _followings.push(newfollowing)
+    });
+
+    delete cntx.result.followings;
+    cntx.result.followings = _followings;
+    cntx.params.following = true;
+  }
 }
 
 const buildFollowersPacket = cntx => {
+  if (cntx.params.query.$getFollowers){
+    cntx.result = cntx.result.toObject();
 
-  cntx.result = cntx.result.toObject();
+    delete cntx.result._id;
 
-  delete cntx.result._id;
+    let followers = cntx.result.followers;
 
-  let followers = cntx.result.followers;
+    let _followers = [];
+    followers.forEach(follower => {
+      follower.profile.profileId = follower.profile._id;
+      delete follower.profile._id;
 
-  let _followers = [];
-  followers.forEach(follower => {
+      var newfollower = {
+        followerId : follower._id,
+        username : follower.username,
+        profile : follower.profile,
+      }
 
-    follower.profile.profileId = follower.profile._id;
+      _followers.push(newfollower)
+    });
 
-    delete follower.profile._id;
-
-    var newfollower = {
-      followerId : follower._id,
-      username : follower.username,
-      profile : follower.profile,
-    }
-
-    _followers.push(newfollower)
-  });
-
-  delete cntx.result.followers;
-  cntx.result.followers = _followers;
+    delete cntx.result.followers;
+    cntx.result.followers = _followers;
+  }
 }
 
-const buildFinalOutPut = (cntx, following = false) => {
+const buildFinalOutPut = (cntx) => {
 
-  if (following){
+  if (cntx.params.following){
     let res = {
       status : true,
       payload : {
-        followingsCount : cntx.result.following.length,
-        following : cntx.result.following
+        followingsCount : cntx.result.followings.length,
+        followings : cntx.result.followings
       }
     }
 
@@ -311,7 +317,7 @@ module.exports = {
 
   after: {
     all: [],
-    find: [buildFollowersPacket, buildFinalOutPut],
+    find: [buildFollowersPacket, buildFollowingsPacket, buildFinalOutPut],
     get: [],
     create: [],
     update: [],
