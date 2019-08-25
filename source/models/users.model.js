@@ -30,6 +30,8 @@ module.exports = function (app) {
 
     followings: [{type: Schema.Types.ObjectId, ref: "users", unique: true}],
 
+    chats: [{type: Schema.Types.ObjectId, ref: "chats", unique: true}],
+
     devices: {type: Schema.Types.ObjectId, ref: "devices"},
 
     social : {type: Schema.Types.ObjectId, ref: "socials"}

@@ -8,6 +8,8 @@ module.exports = function (app) {
   const messages = new Schema({
     sender : { type: Schema.Types.ObjectId, ref: 'users', required: true, index: true },
 
+    body:{type: String},
+
     isForwarded : {type: Boolean, index: true, default: false},
     forwardMessage : { type: Schema.Types.ObjectId, ref: 'messages', index: true },
 
