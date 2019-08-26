@@ -12,7 +12,7 @@ module.exports = function (app) {
   });
 
 
-  dialogsSchema.statics.sendMessge = function (sender, receiver) {
+  dialogsSchema.statics.sendMessage = function (sender, receiver, data) {
 
     let conditions_find = {
       "$or": [
@@ -21,16 +21,46 @@ module.exports = function (app) {
       ]
     }
 
-    dialogsModel.findOne(conditions_find).then(finded => {
-      if (finded == null){
-        let conditions = {
-          members: [receiver, sender]
+    return new Promise(resolve => {
+      dialogsModel.findOne(conditions_find).then(finded => {
+
+        if (finded == null){
+          let conditions = {
+            members: [receiver, sender]
+          }
+
+          let _dialogModel = new dialogsModel(conditions);
+
+          _dialogModel.save().then(saved => {
+
+            let msgConditions = {
+              sender: sender,
+              messageType: data.messageType == 'Text' ? 0 : 1,
+              isForwarded: data.isForwarded,
+              body: data.body,
+              dialog: saved._id
+            }
+
+            let msgModel = app.service('messages').Model;
+            let messageModel = new msgModel(msgConditions);
+
+            messageModel.save().then(newSaved => {
+              resolve({message : newSaved, dialog : saved})
+            }).catch(error => {
+              resolve({error : true, errordata : error})
+            })
+          }).catch(error =>{
+            resolve({error : true, errordata : error})
+          })
         }
-
-
-      }
+        else
+        {
+          resolve('To-Do : Update existing dialog')
+        }
+      }).catch(error=>{
+        resolve({error : true, errordata : error})
+      })
     })
-
   }
 
   var dialogsModel = mongooseClient.model('dialogs', dialogsSchema);

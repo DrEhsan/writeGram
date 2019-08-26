@@ -68,61 +68,15 @@ io.on('connection', async socket => {
 
       if (data.peer == 'dialog'){
 
-        let conditions_find = {
-          "$or": [
-            { members: [data.inputPeer, socket.user._id] },
-            { members: [socket.user._id, data.inputPeer] }
-          ]
+        let result = (await app.service('dialogs').Model.sendMessage(socket.user, data.inputPeer, data));
+
+        if (result.error){
+          console.log(result.errordata)
         }
-
-        let conditions = {
-          members: [data.inputPeer, socket.user._id]
-        }
-
-        let ehsan = await app.service('dialogs').Model
-        .findOne(conditions_find).exec();
-
-        console.log(ehsan)
-
-        if (ehsan == null){
-
-          let model = app.service('dialogs').Model;
-          let dialogModel = new model(conditions)
-          let promise = new Promise(resolve => {
-            dialogModel.save().then(saved => {
-
-              let msgConditions = {
-                sender: socket.user._id,
-                messageType: data.messageType == 'Text' ? 0 : 1,
-                isForwarded: data.isForwarded,
-                body: data.body
-              }
-
-              let msgModel = app.service('messages').Model;
-              let messageModel = new msgModel(msgConditions)
-
-
-              messageModel.save().then(newSaved => {
-                resolve({message : newSaved, dialog : saved})
-              }).catch(error => {
-                resolve({error : true, errordata : error})
-              })
-
-            }).catch(error => {
-              resolve({error : true, errordata : error})
-            })
-          })
-
-          let result = (await Promise.all([promise]))[0];
-
-          if (result.error){
-            console.log(result.errordata)
-          }
-          else{
-            socket.join('dialog_' + result.dialog._id);
-            socket.to('user_'+data.inputPeer).emit('newMessageUpdate', {sender : res.username, body : data.body});
-            socket.emit('sendMessage', data.body);
-          }
+        else{
+          socket.join('dialog_' + result.dialog._id);
+          socket.to('user_'+data.inputPeer).emit('newMessageUpdate', {sender : res.username, body : data.body});
+          socket.emit('sendMessage', data.body);
         }
       }
     })

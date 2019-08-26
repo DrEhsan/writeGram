@@ -7,7 +7,7 @@ module.exports = function (app) {
   const { Schema } = mongooseClient;
   const messages = new Schema({
     sender : { type: Schema.Types.ObjectId, ref: 'users', required: true, index: true },
-
+    dialog : { type: Schema.Types.ObjectId, ref: 'dialogs', required: true, index: true },
     body:{type: String},
 
     isForwarded : {type: Boolean, index: true, default: false},
