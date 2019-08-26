@@ -12,6 +12,33 @@ module.exports = function (app) {
   });
 
 
+  dialogsSchema.statics.saveDialogForUser = function (members, dialog){
+
+    let promises = [];
+
+    let userModel = app.service('users').Model;
+    members.forEach(member => {
+      let promise = new Promise(resolve =>{
+
+        let condition = { _id : member};
+        let update = {
+          $push: { dialogs: dialog }
+        }
+
+        userModel.findOneAndUpdate(condition, update).then(updated => {
+          resolve(updated)
+        }).catch(error => {
+          resolve(error)
+        })
+
+      })
+
+      promises.push(promise)
+    });
+
+    return promises;
+  }
+
   dialogsSchema.statics.sendMessage = function (sender, receiver, data) {
 
     let conditions_find = {
@@ -47,18 +74,33 @@ module.exports = function (app) {
             messageModel.save().then(newSaved => {
               resolve({message : newSaved, dialog : saved})
             }).catch(error => {
-              resolve({error : true, errordata : error})
+              resolve({ error: true, code: 26, name: 'ErrorOnDb'})
             })
           }).catch(error =>{
-            resolve({error : true, errordata : error})
+            resolve({ error: true, code: 26, name: 'ErrorOnDb'})
           })
         }
         else
         {
-          resolve('To-Do : Update existing dialog')
+          let msgConditions = {
+            sender: sender,
+            messageType: data.messageType == 'Text' ? 0 : 1,
+            isForwarded: data.isForwarded,
+            body: data.body,
+            dialog: finded._id
+          }
+
+          let msgModel = app.service('messages').Model;
+          let messageModel = new msgModel(msgConditions);
+
+          messageModel.save().then(newSaved => {
+            resolve({message : newSaved, dialog : finded, isOld : true})
+          }).catch(error => {
+            resolve({ error: true, code: 26, name: 'ErrorOnDb'})
+          })
         }
       }).catch(error=>{
-        resolve({error : true, errordata : error})
+        resolve({ error: true, code: 26, name: 'ErrorOnDb'})
       })
     })
   }

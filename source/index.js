@@ -53,53 +53,88 @@ io.on('connection', async socket => {
 
     //console.log('res' + res)
   if (res == null){
-
     return socket.disconnect();
   }
   else{
 
     socket.user = res;
 
-    socket.join('user_'+res._id);
+    // every user has his own channel after authentication
+    socket.join('user_'+socket.user._id);
 
+    // lets fire client that it has been connected successfully
     socket.emit('connected', { status: true, payload: { connected : true } });
 
+
+    // subscribe on dialog rooms
+
+
+    // this event handles message sending from clients
     socket.on('sendMessage', async data => {
 
+      // handling dialog type chats
       if (data.peer == 'dialog'){
 
-        let result = (await app.service('dialogs').Model.sendMessage(socket.user, data.inputPeer, data));
+        let dialogsModel = app.service('dialogs').Model
+
+        let result = (await dialogsModel.sendMessage(socket.user, data.inputPeer, data));
 
         if (result.error){
+
+          // Todo : send error message to client that error happend!
           console.log(result.errordata)
         }
         else{
-          socket.join('dialog_' + result.dialog._id);
-          socket.to('user_'+data.inputPeer).emit('newMessageUpdate', {sender : res.username, body : data.body});
-          socket.emit('sendMessage', data.body);
+
+          let dialogRoom = 'dialog_' + result.dialog._id;
+
+          var socksInRoom = io.sockets.adapter.rooms[dialogRoom];
+
+          if (socksInRoom != undefined){
+            if (socksInRoom.sockets[socket.id]){
+              socket.to(dialogRoom).emit('newMessageUpdate', {sender : socket.user.username, body : data.body});
+              socket.emit('sendMessage', data.body);
+            }
+          }
+          else{
+            // client joins the dialog room
+            socket.join(dialogRoom);
+
+            // lets say client that new message incoming
+            socket.to('user_' + data.inputPeer).emit('newMessageUpdate', {sender : socket.user.username, body : data.body, dialog: result.dialog._id});
+
+            // reply sender the result
+            socket.emit('sendMessage', data.body);
+
+            dialogsModel.saveDialogForUser([socket.user._id, data.inputPeer], result.dialog._id)
+          }
         }
       }
     })
 
-    /*
-    let dialogsArr = res.dialogs;
 
-    var dialogsCap = [];
+    socket.on('gotMessage', data => {
 
-    let Promise = Promise.resolve
-
-    dialogsArr.forEach(dialog => {
-
-      cntx.app.service('users').Model
-
-    });*/
+      /**
+       * To Do :
+       * 1. send notify to peer user that message has read
+       * 2. set read flag on message model
+       * 3. standard check before joining room
+       * */
 
 
+      let dialogRoom = 'dialog_' + data.dialog;
+      socket.join(dialogRoom);
 
+      var socksInRoom = io.sockets.adapter.rooms[dialogRoom];
+
+      if (socksInRoom != undefined){
+        if (socksInRoom.sockets[socket.id]){
+
+        }
+      }
+    })
   }
-
-
-
 });
 
 
