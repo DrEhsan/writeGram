@@ -3,6 +3,8 @@ const createService = require('feathers-mongoose');
 const createModel = require('../../models/messages.model');
 const hooks = require('./messages.hooks');
 
+const ensureApiKey = require('../../middleware/ensureApiKey')
+
 module.exports = function (app) {
   const Model = createModel(app);
   const paginate = app.get('paginate');
@@ -13,7 +15,7 @@ module.exports = function (app) {
   };
 
   // Initialize our service with any options it requires
-  app.use('/messages', createService(options));
+  app.use('/messages', ensureApiKey, createService(options));
 
   // Get our initialized service so that we can register hooks
   const service = app.service('messages');

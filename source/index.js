@@ -92,7 +92,15 @@ io.on('connection', async socket => {
 
           if (socksInRoom != undefined){
             if (socksInRoom.sockets[socket.id]){
-              socket.to(dialogRoom).emit('newMessageUpdate', {sender : socket.user.username, body : data.body});
+              socket.to(dialogRoom)
+              .emit('newMessageUpdate',
+              {
+                sender : socket.user.username,
+                body : data.body,
+                dialog: result.dialog._id,
+                message_id: result.message._id
+              });
+
               socket.emit('sendMessage', data.body);
             }
           }
@@ -101,11 +109,19 @@ io.on('connection', async socket => {
             socket.join(dialogRoom);
 
             // lets say client that new message incoming
-            socket.to('user_' + data.inputPeer).emit('newMessageUpdate', {sender : socket.user.username, body : data.body, dialog: result.dialog._id});
+            socket.to('user_' + data.inputPeer)
+            .emit('newMessageUpdate',
+            {
+              sender : socket.user.username,
+              body : data.body,
+              dialog: result.dialog._id,
+              message_id: result.message._id
+            });
 
             // reply sender the result
             socket.emit('sendMessage', data.body);
 
+            // Todo : check for existing data before saving
             dialogsModel.saveDialogForUser([socket.user._id, data.inputPeer], result.dialog._id)
           }
         }
@@ -116,23 +132,29 @@ io.on('connection', async socket => {
     socket.on('gotMessage', data => {
 
       /**
-       * To Do :
        * 1. send notify to peer user that message has read
        * 2. set read flag on message model
        * 3. standard check before joining room
        * */
 
-
       let dialogRoom = 'dialog_' + data.dialog;
-      socket.join(dialogRoom);
 
-      var socksInRoom = io.sockets.adapter.rooms[dialogRoom];
 
-      if (socksInRoom != undefined){
-        if (socksInRoom.sockets[socket.id]){
-
+      // check if socket joiend room before to not redunduncy joining
+      if (io.sockets.adapter.rooms){
+        var socksInRoom = io.sockets.adapter.rooms[dialogRoom];
+        if (socksInRoom != undefined){
+          if (!socksInRoom.sockets[socket.id]){
+            socket.join(dialogRoom);
+          }
         }
       }
+
+      // notify peer user that we got new message
+      socket.to(dialogRoom).emit('readMessage', data.message_id);
+
+      // save read flag in database
+      app.service('messages').patch(data.message_id, {read : true})
     })
   }
 });

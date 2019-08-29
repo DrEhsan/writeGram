@@ -7,6 +7,7 @@ module.exports = function (app) {
   const { Schema } = mongooseClient;
   const dialogsSchema = new Schema({
     members : [{ type: Schema.Types.ObjectId, ref: 'users', required: true, index: true }],
+
   }, {
     timestamps: true
   });
@@ -30,7 +31,6 @@ module.exports = function (app) {
         }).catch(error => {
           resolve(error)
         })
-
       })
 
       promises.push(promise)
@@ -49,8 +49,11 @@ module.exports = function (app) {
     }
 
     return new Promise(resolve => {
+
+      // lets find the dialog
       dialogsModel.findOne(conditions_find).then(finded => {
 
+        // if it is null then lets create a new dialog for members
         if (finded == null){
           let conditions = {
             members: [receiver, sender]
@@ -82,6 +85,7 @@ module.exports = function (app) {
         }
         else
         {
+          // dialog exists and then lets save new message for it
           let msgConditions = {
             sender: sender,
             messageType: data.messageType == 'Text' ? 0 : 1,
