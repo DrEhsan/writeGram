@@ -21,12 +21,6 @@ io.on('connection', async socket => {
     return socket.disconnect();
   }
 
-  /*
-  if (socket.handshake.headers.apikey == undefined){
-    return socket.disconnect();
-  }*/
-
-
   let apikey = socket.handshake.query.apikey;
 
   let res = await app.service('users').Model
@@ -60,14 +54,25 @@ io.on('connection', async socket => {
     socket.user = res;
 
     // every user has his own channel after authentication
-    socket.join('user_'+socket.user._id);
+    socket.join('user_'+ socket.user._id);
 
     // lets fire client that it has been connected successfully
     socket.emit('connected', { status: true, payload: { connected : true } });
 
-
     // subscribe on dialog rooms
+    res.dialogs.forEach(async dialog => {
+      let _dialogRoom = 'dialog_' + dialog._id;
 
+      // check if socket joiend room before to not redunduncy joining
+      if (io.sockets.adapter.rooms){
+        var socksInRoom = io.sockets.adapter.rooms[_dialogRoom];
+        if (socksInRoom != undefined){
+          if (!socksInRoom.sockets[socket.id]){
+            socket.join(_dialogRoom);
+          }
+        }
+      }
+    });
 
     // this event handles message sending from clients
     socket.on('sendMessage', async data => {
@@ -128,7 +133,6 @@ io.on('connection', async socket => {
       }
     })
 
-
     socket.on('gotMessage', data => {
 
       /**
@@ -138,7 +142,6 @@ io.on('connection', async socket => {
        * */
 
       let dialogRoom = 'dialog_' + data.dialog;
-
 
       // check if socket joiend room before to not redunduncy joining
       if (io.sockets.adapter.rooms){
