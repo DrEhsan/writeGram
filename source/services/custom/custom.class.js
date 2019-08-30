@@ -48,7 +48,7 @@ class Service {
           "requester._id": 0,
           "requester.email": 0,
           "requester.registerStatus": 0,
-          "requester.apiKey": 0,
+          "requester.api_key": 0,
           "requester.password": 0,
           "requester.profile._id": 0,
           "requester.profile.__v": 0,

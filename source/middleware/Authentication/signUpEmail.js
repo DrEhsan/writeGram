@@ -67,7 +67,7 @@ module.exports = function (app){
 
       return responder.SendResponse(res, {
         email : email,
-        apiKey : user.apiKey,
+        api_key : user.api_key,
       })
 
     }

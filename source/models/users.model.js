@@ -19,10 +19,10 @@ module.exports = function (app) {
 
     password: 	{	type:String },
 
-    apiKey: { type:String, index:{	unique: true, spare: true }},
+    api_key: { type:String, index:{	unique: true, spare: true }},
 
     // 0 - just email submited, 1 - username and has submited, 2 - email confirmed
-    registerStatus : { type: Number, default: 0},
+    register_status : { type: Number, default: 0},
 
     profile: {type: Schema.Types.ObjectId, ref: "profile"},
 
@@ -47,7 +47,7 @@ module.exports = function (app) {
 
     if (this.isNew)
     {
-      this.apiKey = crypto.createHmac('sha256', this.email + "writeGram")
+      this.api_key = crypto.createHmac('sha256', this.email + "writeGram")
                                .update(new Date().toString()+"_" +this.email)
                                .digest('hex');
 
@@ -65,9 +65,9 @@ module.exports = function (app) {
    * @param       {ObjectId}  follower      - the _id of user who asked to follow
    * @param       {ObjectId}  tobeFollow      - the _id of user who asked to be follow
    */
-  usersSchema.statics.addFollow = function (follower, tobeFollow){
-    usersModel.findOneAndUpdate({ _id: tobeFollow}, { $push: { followers: follower  } }).exec()
-    usersModel.findOneAndUpdate({ _id: follower}, { $push: { following: tobeFollow  } }).exec()
+  usersSchema.statics.addFollow = function (follower, to_be_follow){
+    usersModel.findOneAndUpdate({ _id: to_be_follow}, { $push: { followers: follower  } }).exec()
+    usersModel.findOneAndUpdate({ _id: follower}, { $push: { following: to_be_follow  } }).exec()
   }
 
   usersSchema.statics.removeFollow = function (requester, requested){

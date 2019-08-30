@@ -6,13 +6,13 @@ const ensureApiKey =  (req, res, next) =>{
 
 		let app = req.app;
 
-		if (!req.headers.apikey){
+		if (!req.headers.api_key){
 			return responder.sendErrorResponse(res, "NoAuthHeader");
 		}
 
-		let apiKey = req.headers.apikey;
+		let api_key = req.headers.api_key;
 
-		app.service('users').find({ query: { apiKey: apiKey}})
+		app.service('users').find({ query: { api_key: api_key}})
 			.then(user=>{
 				if (user.total < 1){
 					return responder.sendErrorResponse(res, "NotAuthorized");

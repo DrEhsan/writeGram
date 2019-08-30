@@ -1,6 +1,6 @@
 const { iff, isProvider } = require('feathers-hooks-common')
 
-const Before_InternalPopulater = cntx => {
+const before_internal_populater = cntx => {
   if (cntx.params.populate == undefined){
     return cntx;
   }
@@ -25,7 +25,7 @@ const After_InternalPopulater = cntx => {
 
 module.exports = {
   before: {
-    all: [Before_InternalPopulater],
+    all: [before_internal_populater],
     find: [],
     get: [],
     create: [],

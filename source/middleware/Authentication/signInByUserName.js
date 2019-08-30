@@ -29,11 +29,11 @@ module.exports = function(app){
 				return responder.sendErrorResponse(res, 'PasswordIsIncorrect');
 			}
 
-			let newApiKey =	crypto.createHmac('sha256', email + "writeGram")
+			let new_api_key =	crypto.createHmac('sha256', email + "writeGram")
 														.update(new Date().toString()+"_" + email)
 														.digest('hex');
 
-			var patchedUser = await app.service('users').patch(user._id, { apiKey: newApiKey }, {populate: 'profile'});
+			var patched_user = await app.service('users').patch(user._id, { api_key: new_api_key }, {populate: 'profile'});
 
 			{
 				// get wall
@@ -41,9 +41,9 @@ module.exports = function(app){
 			}
 
 			var resBody = {
-				userId : patchedUser._id,
-				apiKey: newApiKey,
-				profile : patchedUser.profile // get profile data
+				userId : patched_user._id,
+				api_key: new_api_key,
+				profile : patched_user.profile // get profile data
 			}
 
 			return responder.SendResponse(res, resBody)

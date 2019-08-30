@@ -21,10 +21,10 @@ io.on('connection', async socket => {
     return socket.disconnect();
   }
 
-  let apikey = socket.handshake.query.apikey;
+  let api_key = socket.handshake.query.api_key;
 
   let res = await app.service('users').Model
-    .findOne({ apiKey: apikey })
+    .findOne({ api_key: api_key })
     .populate({
       path : 'dialogs',
       select: { '_id': 1},
