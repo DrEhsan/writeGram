@@ -35,7 +35,7 @@ describe('Feathers application tests', () => {
           'Accept': 'text/html'
         }
       }).catch(res => {
-        assert.equal(res.statusCode, 404);
+        assert.equal(res.status_code, 404);
         assert.ok(res.error.indexOf('<html>') !== -1);
       });
     });
@@ -45,7 +45,7 @@ describe('Feathers application tests', () => {
         url: getUrl('path/to/nowhere'),
         json: true
       }).catch(res => {
-        assert.equal(res.statusCode, 404);
+        assert.equal(res.status_code, 404);
         assert.equal(res.error.code, 404);
         assert.equal(res.error.message, 'Page not found');
         assert.equal(res.error.name, 'NotFound');

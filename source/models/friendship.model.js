@@ -11,22 +11,20 @@ module.exports = function (app) {
     requester: { type: Schema.Types.ObjectId, ref: 'users', required: true, index: true },
     requested: { type: Schema.Types.ObjectId, ref: 'users', required: true, index: true },
     status: { type: String, default: 'Pending', index: true},
-    dateSent: { type: Date, default: Date.now, index: true },
-    dateAccepted: { type: Date, required: false, index: true }
+    date_request_sent: { type: Date, default: Date.now, index: true },
+    date_request_accepted: { type: Date, required: false, index: true }
   }, {
     timestamps: true,
     versionKey: false
   });
 
   // remove from follow list
-  friendshipSchema.statics.removeFollower = function (accountTobeRemove, mainAccount){
+  friendshipSchema.statics.removeFollower = function (account_to_be_remove, account_main){
     var conditions = {
-      requester: mainAccount,
-      requested: accountTobeRemove,
+      requester: account_main,
+      requested: account_to_be_remove,
       status: 'Accepted'
     };
-
-    console.log(accountTobeRemove)
 
     return new Promise(resolve => {
       friendModel.findOneAndRemove(conditions).then(removed => {
@@ -42,10 +40,10 @@ module.exports = function (app) {
     })
   }
 
-  friendshipSchema.statics.unFollow = function (requesterId, requestedId){
+  friendshipSchema.statics.unFollow = function (requester_id, requested_id){
     var conditions = {
-      requester: requesterId,
-      requested: requestedId,
+      requester: requester_id,
+      requested: requested_id,
       status: 'Accepted'
     };
 
@@ -63,10 +61,10 @@ module.exports = function (app) {
     })
   }
 
-  friendshipSchema.statics.denyFriendRequest = function (requesterId, requestedId){
+  friendshipSchema.statics.denyFriendRequest = function (requester_id, requested_id){
     var conditions = {
-      requester: requestedId,
-      requested: requesterId,
+      requester: requested_id,
+      requested: requester_id,
       status: 'Pending'
     };
 
@@ -84,10 +82,10 @@ module.exports = function (app) {
     })
   }
 
-  friendshipSchema.statics.cancelFriendRequest = function (requesterId, requestedId){
+  friendshipSchema.statics.cancelFriendRequest = function (requester_id, requested_id){
     var conditions = {
-      requester: requesterId,
-      requested: requestedId,
+      requester: requester_id,
+      requested: requested_id,
       status: 'Pending'
     };
 
@@ -105,16 +103,16 @@ module.exports = function (app) {
     })
   }
 
-  friendshipSchema.statics.acceptFriendRequest = function (requesterId, requestedId){
+  friendshipSchema.statics.acceptFriendRequest = function (requester_id, requested_id){
     var conditions = {
-      requester: requestedId,
-      requested: requesterId,
+      requester: requested_id,
+      requested: requester_id,
       status: 'Pending'
     };
 
     var updates = {
       status: 'Accepted',
-      dateAccepted: Date.now()
+      date_request_accepted: Date.now()
     };
 
     var options = { 'new': true };
@@ -123,7 +121,6 @@ module.exports = function (app) {
       friendModel.findOneAndUpdate(conditions, updates, options)
         .then(result =>{
           if (result){
-            //userModel.addFollow(requestedId, requesterId);
             resolve(
               result
                 .populate({ path : 'requester',  select: { '_id': 1, 'username':1 }, populate : { path : 'profile'}})
@@ -142,10 +139,10 @@ module.exports = function (app) {
   }
 
 
-  friendshipSchema.statics.doFriendRequest = function (requesterId, requestedId) {
+  friendshipSchema.statics.doFriendRequest = function (requester_id, requested_id) {
     var conditions = {
-      requester: requesterId,
-      requested: requestedId,
+      requester: requester_id,
+      requested: requested_id,
     };
 
     return new Promise(resolve =>{
@@ -153,8 +150,8 @@ module.exports = function (app) {
         .then(result => {
           if (result == null){
             //conditions.lean = false;
-            const newfriendShip = new friendModel(conditions);
-              newfriendShip.save().then(newfriend => {
+            const new_friendship = new friendModel(conditions);
+            new_friendship.save().then(newfriend => {
                 resolve(
                           newfriend
                             .populate({ path : 'requester',  select: { '_id': 1, 'username':1 }, populate : { path : 'profile'}})

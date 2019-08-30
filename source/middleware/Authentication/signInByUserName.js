@@ -41,7 +41,7 @@ module.exports = function(app){
 			}
 
 			var resBody = {
-				userId : patched_user._id,
+				user_id : patched_user._id,
 				api_key: new_api_key,
 				profile : patched_user.profile // get profile data
 			}

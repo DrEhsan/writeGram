@@ -36,26 +36,26 @@ const filterQuery = async cntx => {
 const requestDispatcher = async (cntx, method) => {
   let requester = cntx.params.user;
   let friendShip = cntx.app.service('friendship').Model;
-  let { requestedUser } = cntx.data != undefined ? cntx.data  : cntx.params.body;
+  let { requested_user } = cntx.data != undefined ? cntx.data  : cntx.params.body;
 
   let promise = null;
-  let customizeBody = false;
-  let statusCode = 202;
+  let customize_body = false;
+  let status_code = 202;
 
   switch(method){
-    case 'doFriendRequest': promise = friendShip.doFriendRequest(requester._id, requestedUser); customizeBody = true; break;
-    case 'acceptFriendRequest': promise = friendShip.acceptFriendRequest(requester._id, requestedUser); customizeBody = true; break;
-    case 'cancelFriendRequest':  promise = friendShip.cancelFriendRequest(requester._id, requestedUser); break;
-    case 'denyFriendRequest':  promise = friendShip.denyFriendRequest(requester._id, requestedUser); break;
-    case 'unFollow' : promise = friendShip.unFollow(requester._id, requestedUser); break;
-    case 'removeFollower' : promise = friendShip.removeFollower(requester._id, requestedUser); break;
+    case 'doFriendRequest': promise = friendShip.doFriendRequest(requester._id, requested_user); customize_body = true; break;
+    case 'acceptFriendRequest': promise = friendShip.acceptFriendRequest(requester._id, requested_user); customize_body = true; break;
+    case 'cancelFriendRequest':  promise = friendShip.cancelFriendRequest(requester._id, requested_user); break;
+    case 'denyFriendRequest':  promise = friendShip.denyFriendRequest(requester._id, requested_user); break;
+    case 'unFollow' : promise = friendShip.unFollow(requester._id, requested_user); break;
+    case 'removeFollower' : promise = friendShip.removeFollower(requester._id, requested_user); break;
   }
 
   let result = (await Promise.all([promise]))[0];
 
   // error occured!
   if (result.error){
-    var ResBody = { statusCode : 500, status : false, error: { innerCode: result.name, reason: result.code }}
+    var ResBody = { status_code : 500, status : false, error: { innerCode: result.name, reason: result.code }}
     cntx.result = ResBody;
     return cntx;
   }
@@ -63,20 +63,20 @@ const requestDispatcher = async (cntx, method) => {
   // some methods needs editation in users model
   let userModel = cntx.app.service('users').Model;
   switch(method){
-    case "acceptFriendRequest" : userModel.addFollow(requestedUser, requester._id); break;
-    case "unFollow" : userModel.removeFollow(requestedUser, requester._id); break;
-    case "removeFollower" : userModel.removeFollower(requestedUser, requester._id); break;
+    case "acceptFriendRequest" : userModel.addFollow(requested_user, requester._id); break;
+    case "unFollow" : userModel.removeFollow(requested_user, requester._id); break;
+    case "removeFollower" : userModel.removeFollower(requested_user, requester._id); break;
   }
 
-  if (customizeBody){
+  if (customize_body){
     // send result of request : To-Do -> build successful packet on after hook
-    statusCode = 201;
+    status_code = 201;
     result = result.toObject();
 
-    result.requester.userId = result.requester._id;
-    result.requested.userId = result.requested._id;
-    result.requester.profile.profileId = result.requester.profile._id;
-    result.requested.profile.profileId = result.requested.profile._id;
+    result.requester.user_id = result.requester._id;
+    result.requested.user_id = result.requested._id;
+    result.requester.profile.profile_id = result.requester.profile._id;
+    result.requested.profile.profile_id = result.requested.profile._id;
 
     delete result.requester._id;
     delete result.requested._id;
@@ -85,7 +85,7 @@ const requestDispatcher = async (cntx, method) => {
     delete result._id;
   }
 
-  cntx.result = { statusCode: statusCode, status: true, payload : result};
+  cntx.result = { status_code: status_code, status: true, payload : result};
   return cntx;
 }
 
@@ -121,15 +121,15 @@ const getPendingRequests = async cntx => {
     }
   },
   {
-    $addFields: {"requester.userId": "$requester._id"},
-    $addFields: {"requester.profile.profileId": "$requester.profile._id"},
+    $addFields: {"requester.user_id": "$requester._id"},
+    $addFields: {"requester.profile.profile_id": "$requester.profile._id"},
   },
   {
     $project: {
       _id: 0,
       "requester._id": 0,
       "requester.email": 0,
-      "requester.registerStatus": 0,
+      "requester.register_status": 0,
       "requester.api_key": 0,
       "requester.password": 0,
       "requester.profile._id": 0,
@@ -141,7 +141,7 @@ const getPendingRequests = async cntx => {
   cntx.result = {
     status : true,
     payload: {
-      requestsCount : result.length,
+      requests_count : result.length,
       requests: result
     }
   }
@@ -230,17 +230,17 @@ const buildFollowingsPacket = cntx => {
     let _followings = [];
     followings.forEach(following => {
 
-      following.profile.profileId = following.profile._id;
+      following.profile.profile_id = following.profile._id;
 
       delete following.profile._id;
 
-      var newfollowing = {
-        followingId : following._id,
+      var new_following = {
+        following_id : following._id,
         username : following.username,
         profile : following.profile,
       }
 
-      _followings.push(newfollowing)
+      _followings.push(new_following)
     });
 
     delete cntx.result.followings;
@@ -259,11 +259,11 @@ const buildFollowersPacket = cntx => {
 
     let _followers = [];
     followers.forEach(follower => {
-      follower.profile.profileId = follower.profile._id;
+      follower.profile.profile_id = follower.profile._id;
       delete follower.profile._id;
 
       var newfollower = {
-        followerId : follower._id,
+        follower_id : follower._id,
         username : follower.username,
         profile : follower.profile,
       }
@@ -282,7 +282,7 @@ const buildFinalOutPut = (cntx) => {
     let res = {
       status : true,
       payload : {
-        followingsCount : cntx.result.followings.length,
+        followings_count : cntx.result.followings.length,
         followings : cntx.result.followings
       }
     }
@@ -294,7 +294,7 @@ const buildFinalOutPut = (cntx) => {
   let res = {
     status : true,
     payload : {
-      followersCount : cntx.result.followers.length,
+      followers_count : cntx.result.followers.length,
       followers : cntx.result.followers
     }
   }

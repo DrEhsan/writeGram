@@ -39,8 +39,8 @@ class Service {
         }
       },
       {
-        $addFields: {"requester.userId": "$requester._id"},
-        $addFields: {"requester.profile.profileId": "$requester.profile._id"},
+        $addFields: {"requester.user_id": "$requester._id"},
+        $addFields: {"requester.profile.profile_id": "$requester.profile._id"},
       },
       {
         $project: {

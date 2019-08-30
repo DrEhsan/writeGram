@@ -39,9 +39,9 @@ function restFormatter(req, res) {
   res.format({
     'application/json': function() {
       const data = res.data;
-      if (data.statusCode){
-        let status = data.statusCode;
-        delete data.statusCode;
+      if (data.status_code){
+        let status = data.status_code;
+        delete data.status_code;
         res.status(status || 200);
         res.json(data);
       }
