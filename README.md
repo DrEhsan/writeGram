@@ -1,42 +1,48 @@
-# write-gram
+# Introduction
 
-> this project is designed fo social network backend purposes
+Write Gram a social Network API frameWork based on NodeJS and Powered by [Feathers](http://feathersjs.com) it is opensource and community
+supported. The idea behind this is to design and build an API service for a Normal Social Network.
+The mainly Database used in this project is MongoDB (Mongoose).
 
-## About
+> Attention : This project is is still on development phase!
 
-This project uses [Feathers](http://feathersjs.com). An open source web framework for building modern real-time applications.
+## Status
 
-## Getting Started
+- [ ] Authentication
+  - [x] Register Using Email or Phone
+  - [ ] Register Using Phone Number
+  - [x] Register profile & username
+  - [x] Login Using Email
+  - [ ] Login Using Phone
+  - [x] Login Using Username
+  - [x] LogOut system
+- [x] FriendShip
+  - [x] Send friend request
+  - [x] Accept friend request
+  - [x] cancel friend request
+  - [x] deny friend request
+  - [x] unFollow
+  - [x] remove follower
+  - [x] get pending requests
+  - [x] get followers
+  - [x] get followings
+- [ ] Chat
+  - [x] Send Text Message to friend
+  - [ ] Send Media Message to friend
+- [ ] Group Chat
+- [ ] Posts
+- [ ] Privacy
 
-Getting up and running is as easy as 1, 2, 3.
-
-1. Make sure you have [NodeJS](https://nodejs.org/) and [npm](https://www.npmjs.com/) installed.
-2. Install your dependencies
-
-    ```
-    cd path/to/write-gram; npm install
-    ```
-
-3. Start your app
-
-    ```
-    npm start
-    ```
 
 ## Testing
 
 Simply run `npm test` and all your tests in the `test/` directory will be run.
 
 
-## Help
+## Documents
 
-For more information on all the things you can do with Feathers visit [docs.feathersjs.com](http://docs.feathersjs.com).
+An early document is exists in doc folder for insomnia application, but the updated document will be update ASAP.
 
-## Changelog
-
-__0.1.0__
-
-- Initial release
 
 ## License
 
