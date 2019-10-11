@@ -15,6 +15,17 @@ server.on('listening', () =>
 
 let io = app.io;
 
+const joinRoom = (socket, io, room) =>{
+  if (io.sockets.adapter.rooms){
+    var socksInRoom = io.sockets.adapter.rooms[room];
+    if (socksInRoom != undefined){
+      if (!socksInRoom.sockets[socket.id]){
+        socket.join(room);
+      }
+    }
+  }
+}
+
 io.on('connection', async socket => {
 
   if (socket.handshake.query == undefined){
@@ -62,16 +73,13 @@ io.on('connection', async socket => {
     // subscribe on dialog rooms
     res.dialogs.forEach(async dialog => {
       let _dialogRoom = 'dialog_' + dialog._id;
+      joinRoom(io, socket, _dialogRoom);
+    });
 
-      // check if socket joiend room before to not redunduncy joining
-      if (io.sockets.adapter.rooms){
-        var socksInRoom = io.sockets.adapter.rooms[_dialogRoom];
-        if (socksInRoom != undefined){
-          if (!socksInRoom.sockets[socket.id]){
-            socket.join(_dialogRoom);
-          }
-        }
-      }
+    // subscribe on chat rooms
+    res.chats.forEach(async chat => {
+      let _chatRoom = 'chat_' + chat._id;
+      joinRoom(io, socket, _chatRoom);
     });
 
     // this event handles message sending from clients
@@ -130,6 +138,10 @@ io.on('connection', async socket => {
             dialogsModel.saveDialogForUser([socket.user._id, data.inputPeer], result.dialog._id)
           }
         }
+      }
+      else if (data.peer == 'chat')
+      {
+        // emit to all members & save message.
       }
     })
 

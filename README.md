@@ -1,4 +1,4 @@
-# Introduction
+# Introduction [build passing](https://raw.githubusercontent.com/dwyl/repo-badges/master/highresPNGs/build-passing.png)
 
 Write Gram a social Network API frameWork based on NodeJS and Powered by [Feathers](http://feathersjs.com) it is opensource and community
 supported. The idea behind this is to design and build an API service for a Normal Social Network.
